@@ -16,6 +16,7 @@ import Challenges from './pages/Challenges';
 import PoliciesPage from './pages/governance/PoliciesPage';
 import AuditsPage from './pages/governance/AuditsPage';
 import ReportsPage from './pages/governance/ReportsPage';
+import NotificationsPage from './pages/governance/NotificationsPage';
 import PlaceholderModule from './pages/PlaceholderModule';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
           <Route path="governance/policies" element={<PoliciesPage />} />
           <Route path="governance/audits" element={<AuditsPage />} />
           <Route path="governance/reports" element={<ReportsPage />} />
+          <Route path="governance/notifications" element={<NotificationsPage />} />
 
           {/* Skeletons/Placeholders for other feature tracks to minimize merge conflicts */}
           <Route path="settings" element={<PlaceholderModule />} />

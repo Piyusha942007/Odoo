@@ -51,6 +51,21 @@ router.post('/', async (req, res, next) => {
       effectiveDate
     });
     const savedPolicy = await policy.save();
+
+    // Trigger Notification
+    try {
+      const { triggerNotification } = require('../services/notificationService');
+      await triggerNotification({
+        type: 'Policy Reminder',
+        title: `New ESG Policy: ${savedPolicy.title}`,
+        message: `A new ${savedPolicy.category} policy has been published (v${savedPolicy.version}). Please review and sign off.`,
+        referenceId: savedPolicy._id,
+        referenceModel: 'Policy'
+      });
+    } catch (err) {
+      console.error('Failed to trigger policy creation notification:', err);
+    }
+
     res.status(201).json({ success: true, data: savedPolicy });
   } catch (error) {
     next(error);
@@ -106,6 +121,21 @@ router.post('/:id/acknowledge', async (req, res, next) => {
       { status: 'Acknowledged', acknowledgedAt: new Date() },
       { new: true, upsert: true }
     );
+
+    // Trigger Notification
+    try {
+      const { triggerNotification } = require('../services/notificationService');
+      await triggerNotification({
+        type: 'Approval Decision',
+        title: `Policy Signed: ${policy.title}`,
+        message: `${employee} has signed off and acknowledged the policy.`,
+        referenceId: policy._id,
+        referenceModel: 'Policy'
+      });
+    } catch (err) {
+      console.error('Failed to trigger acknowledgement notification:', err);
+    }
+
     res.json({ success: true, data: acknowledgement });
   } catch (error) {
     next(error);
