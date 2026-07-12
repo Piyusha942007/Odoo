@@ -131,10 +131,7 @@ function AppShell() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              Piyusha Branch Active
-            </div>
+            {/* Branch status indicator removed */}
           </div>
         </header>
 

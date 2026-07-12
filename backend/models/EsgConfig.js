@@ -33,6 +33,10 @@ const EsgConfigSchema = new mongoose.Schema({
     required: true,
     enum: ['simple_average', 'headcount_weighted'],
     default: 'simple_average'
+  },
+  autoEmissionCalculation: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

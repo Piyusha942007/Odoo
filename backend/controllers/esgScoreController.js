@@ -188,18 +188,64 @@ const buildDashboardPayload = async () => {
     }
   }
 
+  // --- Top emitters: aggregate CO2e per department across all transactions ---
+  const deptEmissionMap = {};
+  departments.forEach(d => {
+    deptEmissionMap[d._id.toString()] = { name: d.name, value: 0 };
+  });
+  transactions.forEach(tx => {
+    const key = tx.department?.toString();
+    if (key && deptEmissionMap[key]) {
+      deptEmissionMap[key].value += tx.co2eAmount || 0;
+    }
+  });
+  const topEmitters = Object.values(deptEmissionMap)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5)
+    .map(d => ({ name: d.name, value: Math.round(d.value) }));
+
+  // --- Goal attainment: actual emissions vs target cap per goal ---
+  const goalAttainment = await Promise.all(
+    goals.map(async g => {
+      const deptName = departments.find(
+        d => d._id.toString() === g.department?.toString()
+      )?.name || 'Unknown';
+      const txs = await CarbonTransaction.find({
+        department: g.department,
+        date: {
+          $gte: new Date(g.startDate),
+          $lt:  new Date(new Date(g.deadline).getTime() + 24 * 60 * 60 * 1000)
+        }
+      });
+      const actualValue = txs.reduce((sum, tx) => sum + (tx.co2eAmount || 0), 0);
+      const pct = g.targetValue > 0
+        ? Math.min(Math.round((actualValue / g.targetValue) * 100), 200)
+        : 0;
+      return {
+        title:       g.title,
+        department:  deptName,
+        targetValue: g.targetValue,
+        actualValue: Math.round(actualValue),
+        percentage:  pct,
+        status:      actualValue <= g.targetValue ? 'achieved' : 'at_risk'
+      };
+    })
+  );
+
   return {
     overallESGScore,
     environmentalScore: overallEnv,
-    socialScore: overallSoc,
-    governanceScore: overallGov,
-    totalEmission: Math.round(totalEmission),
-    carbonReduction: Math.round(carbonReduction),
+    socialScore:        overallSoc,
+    governanceScore:    overallGov,
+    totalEmission:      Math.round(totalEmission),
+    carbonReduction:    Math.round(carbonReduction),
     activeGoals,
     departmentCount,
     departmentScores,
     distributionData,
-    trendData
+    trendData,
+    topEmitters,
+    goalAttainment
   };
 };
 

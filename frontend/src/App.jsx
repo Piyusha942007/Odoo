@@ -10,6 +10,7 @@ import ProductEsgProfiles from './pages/environmental/ProductEsgProfiles';
 import SustainabilityGoals from './pages/environmental/SustainabilityGoals';
 import EsgDashboard from './pages/environmental/EsgDashboard';
 import DepartmentTracking from './pages/environmental/DepartmentTracking';
+import AutoEmissionSettings from './pages/environmental/AutoEmissionSettings';
 import CategoriesPage from './pages/social/CategoriesPage';
 import CsrActivities from './pages/social/CsrActivitiesPage';
 import Challenges from './pages/Challenges';
@@ -34,13 +35,13 @@ function App() {
           <Route path="environmental/sustainability-goals" element={<SustainabilityGoals />} />
           <Route path="environmental/esg-dashboard" element={<EsgDashboard />} />
           <Route path="environmental/department-tracking" element={<DepartmentTracking />} />
-          
-          {/* Khushi's Social & Gamification Routes */}
+          <Route path="environmental/auto-emission" element={<AutoEmissionSettings />} />
+          {/* Social & Gamification Routes */}
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="csr" element={<CsrActivities />} />
           <Route path="challenges" element={<Challenges />} />
 
-          {/* Anvi's Governance & Reports Routes */}
+          {/* Governance & Reports Routes */}
           <Route path="governance/policies" element={<PoliciesPage />} />
           <Route path="governance/audits" element={<AuditsPage />} />
           <Route path="governance/reports" element={<ReportsPage />} />

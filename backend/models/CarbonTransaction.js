@@ -11,6 +11,13 @@ const CarbonTransactionSchema = new mongoose.Schema({
     required: [true, 'Source document identifier is required'],
     trim: true
   },
+  // sourceType is set only for Auto-calculated transactions (Purchase/Manufacturing/Expense/Fleet)
+  // Optional for backwards compatibility with existing manual transactions
+  sourceType: {
+    type: String,
+    enum: ['Purchase', 'Manufacturing', 'Expense', 'Fleet', null],
+    default: null
+  },
   emissionFactor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EmissionFactor',
@@ -39,4 +46,13 @@ const CarbonTransactionSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Compound sparse unique index for idempotent auto-emission deduplication.
+// sparse: true means documents with sourceType=null (manual transactions) are excluded
+// — so existing manually-created transactions are completely unaffected.
+CarbonTransactionSchema.index(
+  { sourceType: 1, sourceDocument: 1, department: 1, emissionFactor: 1 },
+  { unique: true, sparse: true, name: 'idempotent_auto_emission' }
+);
+
 module.exports = mongoose.model('CarbonTransaction', CarbonTransactionSchema);
+

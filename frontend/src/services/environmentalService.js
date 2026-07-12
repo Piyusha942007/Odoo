@@ -136,4 +136,21 @@ export const getDepartmentTracking = async (deptId, year) => {
   return response.data;
 };
 
+// --- Auto Emission Calculation APIs ---
+export const getAutoEmissionSettings = async () => {
+  const response = await api.get('/environmental/settings');
+  return response.data;
+};
+
+export const saveAutoEmissionSettings = async (data) => {
+  const response = await api.post('/environmental/settings', data);
+  return response.data;
+};
+
+export const simulateErpRecord = async (data) => {
+  const response = await api.post('/environmental/simulate-erp', data);
+  return response.data;
+};
+
+
 
