@@ -161,25 +161,49 @@ function EnvironmentalOverview() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Environmental Intelligence</h1>
             <p className="text-slate-400 text-sm font-medium mt-1">Track live emissions parameters, goal compliances, and weights calculations.</p>
             
-            <div className="flex flex-wrap gap-4 mt-3 text-xs font-bold">
-              <Link to="/environmental/esg-dashboard" className="text-indigo-400 hover:underline flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-indigo-400" />
-                Open ESG Scoring & Weights Panel →
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Link
+                to="/environmental/esg-dashboard"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/25 hover:bg-indigo-500/20 hover:border-indigo-400/50 hover:-translate-y-0.5 transition-all duration-200 shadow-sm hover:shadow-indigo-500/10 hover:shadow-md"
+              >
+                <span className="p-1 rounded-lg bg-indigo-500/20 group-hover:bg-indigo-500/30 transition-colors">
+                  <Award className="w-3 h-3 text-indigo-300" />
+                </span>
+                <span className="text-[11px] font-semibold text-indigo-300 group-hover:text-indigo-200 whitespace-nowrap">ESG Scoring</span>
+                <svg className="w-3 h-3 text-indigo-500 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
-              <span className="text-slate-700">|</span>
-              <Link to="/environmental/department-tracking" className="text-cyan-400 hover:underline flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-cyan-400" />
-                Department Carbon Tracking →
+
+              <Link
+                to="/environmental/department-tracking"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 hover:border-cyan-400/50 hover:-translate-y-0.5 transition-all duration-200 shadow-sm hover:shadow-cyan-500/10 hover:shadow-md"
+              >
+                <span className="p-1 rounded-lg bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors">
+                  <Building2 className="w-3 h-3 text-cyan-300" />
+                </span>
+                <span className="text-[11px] font-semibold text-cyan-300 group-hover:text-cyan-200 whitespace-nowrap">Dept. Tracking</span>
+                <svg className="w-3 h-3 text-cyan-500 group-hover:text-cyan-300 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
-              <span className="text-slate-700">|</span>
-              <Link to="/environmental/product-esg-profiles" className="text-emerald-400 hover:underline flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-emerald-400" />
-                Product ESG Configurations →
+
+              <Link
+                to="/environmental/product-esg-profiles"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-400/50 hover:-translate-y-0.5 transition-all duration-200 shadow-sm hover:shadow-emerald-500/10 hover:shadow-md"
+              >
+                <span className="p-1 rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                  <Tag className="w-3 h-3 text-emerald-300" />
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-300 group-hover:text-emerald-200 whitespace-nowrap">Product ESG</span>
+                <svg className="w-3 h-3 text-emerald-500 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
-              <span className="text-slate-700">|</span>
-              <Link to="/environmental/auto-emission" className="text-amber-400 hover:underline flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                Auto Emission Settings →
+
+              <Link
+                to="/environmental/auto-emission"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 hover:border-amber-400/50 hover:-translate-y-0.5 transition-all duration-200 shadow-sm hover:shadow-amber-500/10 hover:shadow-md"
+              >
+                <span className="p-1 rounded-lg bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors">
+                  <Zap className="w-3 h-3 text-amber-300" />
+                </span>
+                <span className="text-[11px] font-semibold text-amber-300 group-hover:text-amber-200 whitespace-nowrap">Auto Emission</span>
+                <svg className="w-3 h-3 text-amber-500 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
             </div>
           </div>

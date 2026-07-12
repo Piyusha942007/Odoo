@@ -382,76 +382,141 @@ function Departments() {
           </button>
         </div>
       ) : (
-        /* Table Listing */
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/50">
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Code / Name</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Dept Head</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Parent Department</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Employees</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Status</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800 bg-slate-900">
-                {departments.map((dept) => (
-                  <tr key={dept._id} className="hover:bg-slate-850/30 transition">
-                    <td className="p-4">
-                      <div className="font-bold text-slate-200">{dept.name}</div>
-                      <code className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-                        {dept.code}
-                      </code>
-                    </td>
-                    <td className="p-4 text-slate-300 font-medium text-sm">
-                      {dept.head || <span className="text-slate-500 italic">Unassigned</span>}
-                    </td>
-                    <td className="p-4 text-slate-300 font-medium text-sm">
-                      {dept.parentDepartment ? (
-                        <div className="flex flex-col">
-                          <span className="text-slate-300">{dept.parentDepartment.name}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">({dept.parentDepartment.code})</span>
+        <>
+          {/* Summary strip */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <Building2 className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Depts</p>
+                <p className="text-2xl font-extrabold text-slate-100">{departments.length}</p>
+              </div>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Sparkles className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active</p>
+                <p className="text-2xl font-extrabold text-slate-100">{departments.filter(d => d.status === 'Active').length}</p>
+              </div>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                <svg className="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Employees</p>
+                <p className="text-2xl font-extrabold text-slate-100">{departments.reduce((s, d) => s + (d.employeeCount || 0), 0)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Department Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {departments.map((dept) => {
+              const eScore = dept.environmentalScore || 0;
+              const sScore = dept.socialScore || 0;
+              const gScore = dept.governanceScore || 0;
+              const total = dept.totalESGScore || 0;
+
+              // Color avatar per dept code
+              const avatarColors = {
+                ENG: { bg: 'bg-cyan-500/15', border: 'border-cyan-500/30', text: 'text-cyan-300', glow: 'hover:shadow-cyan-500/10' },
+                SLS: { bg: 'bg-violet-500/15', border: 'border-violet-500/30', text: 'text-violet-300', glow: 'hover:shadow-violet-500/10' },
+                HR:  { bg: 'bg-rose-500/15',  border: 'border-rose-500/30',  text: 'text-rose-300',  glow: 'hover:shadow-rose-500/10' },
+                OPS: { bg: 'bg-amber-500/15', border: 'border-amber-500/30', text: 'text-amber-300', glow: 'hover:shadow-amber-500/10' },
+              };
+              const color = avatarColors[dept.code] || { bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', text: 'text-emerald-300', glow: 'hover:shadow-emerald-500/10' };
+
+              return (
+                <div
+                  key={dept._id}
+                  className={`group relative bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg hover:-translate-y-1 hover:shadow-xl ${color.glow} transition-all duration-200 flex flex-col gap-4`}
+                >
+                  {/* Top row: avatar + name + status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${color.bg} border ${color.border}`}>
+                        <span className={`text-xs font-black font-mono ${color.text}`}>{dept.code}</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-100 text-[15px] leading-tight">{dept.name}</h3>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          {dept.head || <span className="italic">No head assigned</span>}
+                        </p>
+                        {dept.parentDepartment && (
+                          <p className="text-[10px] text-slate-600 font-mono mt-0.5">
+                            ↳ {dept.parentDepartment.name} ({dept.parentDepartment.code})
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      dept.status === 'Active'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                        : 'bg-slate-800 border-slate-700 text-slate-500'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${dept.status === 'Active' ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      {dept.status}
+                    </span>
+                  </div>
+
+                  {/* ESG Score mini bars */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ESG Breakdown</span>
+                      <span className="text-xs font-extrabold text-slate-200">{total}<span className="text-slate-600 font-medium">/100</span></span>
+                    </div>
+                    {[
+                      { label: 'E', score: eScore, color: 'bg-emerald-400', track: 'bg-emerald-950' },
+                      { label: 'S', score: sScore, color: 'bg-cyan-400',    track: 'bg-cyan-950' },
+                      { label: 'G', score: gScore, color: 'bg-violet-400',  track: 'bg-violet-950' },
+                    ].map(({ label, score, color: barColor, track }) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-500 w-3 shrink-0">{label}</span>
+                        <div className={`flex-1 h-1.5 rounded-full ${track}`}>
+                          <div
+                            className={`h-1.5 rounded-full ${barColor} transition-all duration-700`}
+                            style={{ width: `${Math.min(score, 100)}%` }}
+                          />
                         </div>
-                      ) : (
-                        <span className="text-slate-500 italic">None</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-center font-semibold text-slate-200 text-sm">
-                      {dept.employeeCount}
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        dept.status === 'Active' 
-                          ? 'bg-emerald-500/10 text-emerald-400' 
-                          : 'bg-slate-800 text-slate-500'
-                      }`}>
-                        {dept.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right flex items-center justify-end gap-1">
+                        <span className="text-[10px] font-bold text-slate-400 w-7 text-right">{score}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer: employees + actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800">
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      <span className="text-xs font-bold text-slate-300">{dept.employeeCount || 0}</span>
+                      <span className="text-[10px] text-slate-500">employees</span>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(dept)}
-                        className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-950 border border-transparent hover:border-emerald-950 rounded-xl transition duration-200"
-                        title="Edit Department"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 transition duration-150"
+                        title="Edit"
                       >
-                        <Edit3 className="w-4 h-4" />
+                        <Edit3 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(dept._id)}
-                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-slate-950 border border-transparent hover:border-rose-950 rounded-xl transition duration-200"
-                        title="Delete Department"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition duration-150"
+                        title="Delete"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </>
       )}
 
       {/* Edit Department Modal */}
