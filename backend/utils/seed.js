@@ -3,6 +3,8 @@ require('dotenv').config();
 
 const Category = require('../models/Category');
 const Department = require('../models/Department');
+const CsrActivity = require('../models/CsrActivity');
+const Challenge = require('../models/Challenge');
 
 const mongoURI = process.env.MONGODB_URI;
 
@@ -16,10 +18,12 @@ async function seed() {
     await mongoose.connect(mongoURI);
     console.log("Connected to MongoDB for Hour 1 seeding...");
 
-    // Clean Category and Department
+    // Clean Category, Department, CSR Activities and Challenges
     await Category.deleteMany({});
     await Department.deleteMany({});
-    console.log("Cleared Category and Department tables.");
+    await CsrActivity.deleteMany({});
+    await Challenge.deleteMany({});
+    console.log("Cleared Category, Department, CSR Activity, and Challenge tables.");
 
     // Create Category foundation
     const catCsr = await Category.create({ name: "CSR Initiatives", type: "CSR Activity", status: "Active" });

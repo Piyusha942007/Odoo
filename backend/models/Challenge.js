@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+//challenges
 const challengeSchema = new mongoose.Schema({
   title: { type: String, required: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
