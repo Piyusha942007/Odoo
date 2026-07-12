@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/socialApi';
-import { FolderPlus, List, RefreshCw, Edit2, Trash2, Check, X } from 'lucide-react';
+import { FolderPlus, List, RefreshCw, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
 
 function CategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -8,6 +8,7 @@ function CategoriesPage() {
   const [newCat, setNewCat] = useState({ name: '', type: 'CSR Activity', status: 'Active' });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', type: 'CSR Activity', status: 'Active' });
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   const loadCategories = async () => {
     try {
@@ -193,18 +194,36 @@ function CategoriesPage() {
                         <p className="font-bold text-sm text-slate-200">{c.name}</p>
                         <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{c.type}</span>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 relative">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           c.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
                         }`}>
                           {c.status}
                         </span>
-                        <button onClick={() => handleEditClick(c)} className="p-1 text-slate-400 hover:text-emerald-400 transition">
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDelete(c._id)} className="p-1 text-slate-400 hover:text-red-400 transition">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            onClick={() => setActiveMenuId(activeMenuId === c._id ? null : c._id)} 
+                            className="p-1 text-slate-400 hover:text-slate-200 transition"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                          {activeMenuId === c._id && (
+                            <div className="absolute right-0 mt-1 w-24 bg-slate-900 border border-slate-800 rounded shadow-lg z-10 text-xs py-1">
+                              <button 
+                                onClick={() => { handleEditClick(c); setActiveMenuId(null); }} 
+                                className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-slate-200 flex items-center gap-1.5"
+                              >
+                                <Edit2 className="w-3 h-3" /> Edit
+                              </button>
+                              <button 
+                                onClick={() => { handleDelete(c._id); setActiveMenuId(null); }} 
+                                className="w-full text-left px-3 py-1.5 hover:bg-slate-850 text-rose-400 flex items-center gap-1.5"
+                              >
+                                <Trash2 className="w-3 h-3" /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </>
                   )}

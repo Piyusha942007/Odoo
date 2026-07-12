@@ -39,6 +39,13 @@ async function seed() {
     ]);
     console.log("Seeded basic Department structures.");
 
+    // Create default Challenges
+    await Challenge.create([
+      { title: "No Plastic Bottles Challenge", category: catEco._id, description: "Avoid using single-use plastic bottles for 1 week.", xp: 120, difficulty: "Easy", evidenceRequired: true, deadline: new Date(Date.now() + 86400000 * 5), status: "Active" },
+      { title: "Bike to Work Week", category: catEco._id, description: "Commute to work by cycling instead of driving.", xp: 250, difficulty: "Medium", evidenceRequired: false, deadline: new Date(Date.now() + 86400000 * 10), status: "Draft" }
+    ]);
+    console.log("Seeded default Challenges.");
+
     console.log("Hour 1 database seeded successfully!");
     process.exit(0);
   } catch (err) {
