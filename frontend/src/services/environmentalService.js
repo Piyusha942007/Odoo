@@ -109,3 +109,31 @@ export const deleteEnvironmentalGoal = async (id) => {
   const response = await api.delete(`/environmental/goals/${id}`);
   return response.data;
 };
+
+// --- ESG Configuration & Scoring APIs ---
+export const getEsgConfig = async () => {
+  const response = await api.get('/environmental/config');
+  return response.data;
+};
+
+export const saveEsgConfig = async (configData) => {
+  const response = await api.post('/environmental/config', configData);
+  return response.data;
+};
+
+export const getLiveDashboard = async () => {
+  const response = await api.get('/environmental/dashboard');
+  return response.data;
+};
+
+export const recomputeEsgScores = async (periodData = {}) => {
+  const response = await api.post('/environmental/recompute-scores', periodData);
+  return response.data;
+};
+
+export const getDepartmentTracking = async (deptId, year) => {
+  const response = await api.get(`/environmental/departments/${deptId}/tracking?year=${year}`);
+  return response.data;
+};
+
+

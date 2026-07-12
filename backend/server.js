@@ -24,6 +24,12 @@ if (!mongoURI) {
   mongoose.connect(mongoURI)
     .then(() => {
       console.log('MongoDB successfully connected.');
+      try {
+        const { startESGScheduler } = require('./jobs/esgScheduler');
+        startESGScheduler();
+      } catch (err) {
+        console.error('Failed to initialize ESG background scheduler:', err);
+      }
     })
     .catch((err) => {
       console.error('\x1b[31m%s\x1b[0m', 'MongoDB connection error:', err.message);

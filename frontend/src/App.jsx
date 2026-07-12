@@ -8,6 +8,8 @@ import EmissionFactors from './pages/environmental/EmissionFactors';
 import CarbonTransactions from './pages/environmental/CarbonTransactions';
 import ProductEsgProfiles from './pages/environmental/ProductEsgProfiles';
 import SustainabilityGoals from './pages/environmental/SustainabilityGoals';
+import EsgDashboard from './pages/environmental/EsgDashboard';
+import DepartmentTracking from './pages/environmental/DepartmentTracking';
 import CategoriesPage from './pages/social/CategoriesPage';
 import CsrActivities from './pages/social/CsrActivitiesPage';
 import Challenges from './pages/Challenges';
@@ -29,6 +31,8 @@ function App() {
           <Route path="environmental/carbon-transactions" element={<CarbonTransactions />} />
           <Route path="environmental/product-esg-profiles" element={<ProductEsgProfiles />} />
           <Route path="environmental/sustainability-goals" element={<SustainabilityGoals />} />
+          <Route path="environmental/esg-dashboard" element={<EsgDashboard />} />
+          <Route path="environmental/department-tracking" element={<DepartmentTracking />} />
           
           {/* Khushi's Social & Gamification Routes */}
           <Route path="categories" element={<CategoriesPage />} />

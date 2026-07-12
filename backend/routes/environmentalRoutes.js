@@ -32,6 +32,14 @@ const {
   deleteEnvironmentalGoal
 } = require('../controllers/environmentalGoalController');
 
+const {
+  getEsgConfig,
+  saveEsgConfig,
+  getEsgDashboard,
+  recomputeEsgScores,
+  getDepartmentTracking
+} = require('../controllers/esgScoreController');
+
 router.route('/emission-factors')
   .get(getEmissionFactors)
   .post(createEmissionFactor);
@@ -67,5 +75,18 @@ router.route('/goals/:id')
   .get(getEnvironmentalGoalById)
   .put(updateEnvironmentalGoal)
   .delete(deleteEnvironmentalGoal);
+
+router.route('/config')
+  .get(getEsgConfig)
+  .post(saveEsgConfig);
+
+router.route('/dashboard')
+  .get(getEsgDashboard);
+
+router.route('/recompute-scores')
+  .post(recomputeEsgScores);
+
+router.route('/departments/:id/tracking')
+  .get(getDepartmentTracking);
 
 module.exports = router;
