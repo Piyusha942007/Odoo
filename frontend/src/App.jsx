@@ -4,6 +4,7 @@ import AppShell from './layouts/AppShell';
 import Dashboard from './pages/Dashboard';
 import Departments from './pages/Departments';
 import EnvironmentalOverview from './pages/environmental/EnvironmentalOverview';
+import EmissionFactors from './pages/environmental/EmissionFactors';
 import CategoriesPage from './pages/CategoriesPage';
 import CsrActivities from './pages/CsrActivities';
 import Challenges from './pages/Challenges';
@@ -21,6 +22,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="departments" element={<Departments />} />
           <Route path="environmental" element={<EnvironmentalOverview />} />
+          <Route path="environmental/emission-factors" element={<EmissionFactors />} />
           
           {/* Khushi's Social & Gamification Routes */}
           <Route path="categories" element={<CategoriesPage />} />

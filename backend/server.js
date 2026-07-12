@@ -45,6 +45,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 // Mount routes
 app.use('/api/departments', departmentRoutes);
 app.use('/api/social', require('./routes/socialRoutes'));
+app.use('/api/environmental', require('./routes/environmentalRoutes'));
 
 // Mount Governance module routes
 app.use('/api/governance/policies', require('./routes/policyRoutes'));

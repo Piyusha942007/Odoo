@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { getDepartments, createDepartment, deleteDepartment, updateDepartment } from '../services/departmentService';
-import { Building2, Plus, Trash2, AlertCircle, X, Check, Edit3 } from 'lucide-react';
+import { 
+  getEmissionFactors, 
+  createEmissionFactor, 
+  updateEmissionFactor, 
+  deleteEmissionFactor 
+} from '../../services/environmentalService';
+import { Leaf, Plus, Trash2, Edit3, AlertCircle, X, Check, Filter } from 'lucide-react';
 
-function Departments() {
-  const [departments, setDepartments] = useState([]);
+function EmissionFactors() {
+  const [factors, setFactors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedSourceType, setSelectedSourceType] = useState('');
 
   // Form Fields for Create
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [head, setHead] = useState('');
-  const [parentDepartment, setParentDepartment] = useState('');
-  const [employeeCount, setEmployeeCount] = useState(0);
+  const [sourceType, setSourceType] = useState('Purchase');
+  const [unit, setUnit] = useState('');
+  const [co2eFactor, setCo2eFactor] = useState(0);
+  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState('Active');
-  
+
   // State for Edit/Update
-  const [editingDept, setEditingDept] = useState(null);
+  const [editingFactor, setEditingFactor] = useState(null);
   const [editName, setEditName] = useState('');
-  const [editCode, setEditCode] = useState('');
-  const [editHead, setEditHead] = useState('');
-  const [editParentDepartment, setEditParentDepartment] = useState('');
-  const [editEmployeeCount, setEditEmployeeCount] = useState(0);
+  const [editSourceType, setEditSourceType] = useState('Purchase');
+  const [editUnit, setEditUnit] = useState('');
+  const [editCo2eFactor, setEditCo2eFactor] = useState(0);
+  const [editEffectiveDate, setEditEffectiveDate] = useState('');
   const [editStatus, setEditStatus] = useState('Active');
 
   // Custom alert/modal states
@@ -43,74 +49,74 @@ function Departments() {
     }
   }, [toast.show]);
 
-  const fetchDepartments = async () => {
+  const fetchFactors = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getDepartments();
+      const res = await getEmissionFactors(selectedSourceType);
       if (res.success) {
-        setDepartments(res.data);
+        setFactors(res.data);
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch departments. Ensure database connection is active.');
-      showToast('Database offline. Failed to fetch departments.', 'error');
+      setError('Failed to fetch emission factors. Ensure database connection is active.');
+      showToast('Database offline. Failed to fetch emission factors.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDepartments();
-  }, []);
+    fetchFactors();
+  }, [selectedSourceType]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!name || !code) {
-      setSubmitError('Name and Code are required');
+    if (!name || !sourceType || !unit || co2eFactor === '') {
+      setSubmitError('Name, Source Type, Unit, and CO2e Factor are required');
       return;
     }
 
     try {
-      const res = await createDepartment({
+      const res = await createEmissionFactor({
         name,
-        code,
-        head,
-        parentDepartment: parentDepartment || null,
-        employeeCount: Number(employeeCount),
+        sourceType,
+        unit,
+        co2eFactor: Number(co2eFactor),
+        effectiveDate,
         status
       });
 
       if (res.success) {
-        showToast(`Department "${res.data.name}" created successfully!`, 'success');
+        showToast(`Emission Factor "${res.data.name}" created successfully!`, 'success');
         // Reset form
         setName('');
-        setCode('');
-        setHead('');
-        setParentDepartment('');
-        setEmployeeCount(0);
+        setSourceType('Purchase');
+        setUnit('');
+        setCo2eFactor(0);
+        setEffectiveDate(new Date().toISOString().split('T')[0]);
         setStatus('Active');
         setShowAddForm(false);
-        fetchDepartments();
+        fetchFactors();
       }
     } catch (err) {
       console.error(err);
-      const errMsg = err.response?.data?.message || 'Failed to create department';
+      const errMsg = err.response?.data?.message || 'Failed to create emission factor';
       setSubmitError(errMsg);
       showToast(errMsg, 'error');
     }
   };
 
-  const handleEditClick = (dept) => {
-    setEditingDept(dept);
-    setEditName(dept.name);
-    setEditCode(dept.code);
-    setEditHead(dept.head || '');
-    setEditParentDepartment(dept.parentDepartment?._id || dept.parentDepartment || '');
-    setEditEmployeeCount(dept.employeeCount || 0);
-    setEditStatus(dept.status || 'Active');
+  const handleEditClick = (factor) => {
+    setEditingFactor(factor);
+    setEditName(factor.name);
+    setEditSourceType(factor.sourceType);
+    setEditUnit(factor.unit);
+    setEditCo2eFactor(factor.co2eFactor);
+    setEditEffectiveDate(factor.effectiveDate ? factor.effectiveDate.split('T')[0] : '');
+    setEditStatus(factor.status || 'Active');
     setSubmitError(null);
   };
 
@@ -118,29 +124,29 @@ function Departments() {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!editName || !editCode) {
-      setSubmitError('Name and Code are required');
+    if (!editName || !editSourceType || !editUnit || editCo2eFactor === '') {
+      setSubmitError('Name, Source Type, Unit, and CO2e Factor are required');
       return;
     }
 
     try {
-      const res = await updateDepartment(editingDept._id, {
+      const res = await updateEmissionFactor(editingFactor._id, {
         name: editName,
-        code: editCode,
-        head: editHead,
-        parentDepartment: editParentDepartment || null,
-        employeeCount: Number(editEmployeeCount),
+        sourceType: editSourceType,
+        unit: editUnit,
+        co2eFactor: Number(editCo2eFactor),
+        effectiveDate: editEffectiveDate,
         status: editStatus
       });
 
       if (res.success) {
-        showToast(`Department "${res.data.name}" updated successfully!`, 'success');
-        setEditingDept(null);
-        fetchDepartments();
+        showToast(`Emission Factor "${res.data.name}" updated successfully!`, 'success');
+        setEditingFactor(null);
+        fetchFactors();
       }
     } catch (err) {
       console.error(err);
-      const errMsg = err.response?.data?.message || 'Failed to update department';
+      const errMsg = err.response?.data?.message || 'Failed to update emission factor';
       setSubmitError(errMsg);
       showToast(errMsg, 'error');
     }
@@ -154,14 +160,14 @@ function Departments() {
     const id = deleteConfirm.id;
     setDeleteConfirm({ show: false, id: null });
     try {
-      const res = await deleteDepartment(id);
+      const res = await deleteEmissionFactor(id);
       if (res.success) {
-        showToast('Department deleted successfully', 'success');
-        fetchDepartments();
+        showToast('Emission factor deleted successfully', 'success');
+        fetchFactors();
       }
     } catch (err) {
       console.error(err);
-      showToast('Failed to delete department. Database connection offline.', 'error');
+      showToast('Failed to delete emission factor. Database offline.', 'error');
     }
   };
 
@@ -171,28 +177,28 @@ function Departments() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1 font-sans">
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-emerald-400" />
-            Departments Foundation
+            <Leaf className="w-6 h-6 text-emerald-400" />
+            Emission Factors Configuration
           </h2>
-          <p className="text-slate-400 text-sm font-medium">Create, update, and manage your organizational units and ESG hierarchy</p>
+          <p className="text-slate-400 text-sm font-medium">Manage conversion metrics for Scope 1, 2, and 3 CO2e calculations</p>
         </div>
         <button
           onClick={() => {
             setShowAddForm(!showAddForm);
-            setEditingDept(null);
+            setEditingFactor(null);
             setSubmitError(null);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-955 font-bold rounded-xl shadow-lg hover:shadow-emerald-500/20 transition duration-300"
         >
           {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          {showAddForm ? 'Cancel' : 'Add Department'}
+          {showAddForm ? 'Cancel' : 'Add Emission Factor'}
         </button>
       </div>
 
       {/* Add Form (Collapsible) */}
       {showAddForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 animate-fade-in">
-          <h3 className="text-lg font-bold text-slate-200">New Department Details</h3>
+          <h3 className="text-lg font-bold text-slate-200">New Emission Factor</h3>
           
           {submitError && (
             <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-xs font-semibold flex items-center gap-2">
@@ -203,70 +209,68 @@ function Departments() {
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department Name</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Item Name / Source Description</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Purchasing, Supply Chain"
+                placeholder="e.g. Diesel Fuel, Electricity Grid, Steel Purchasing"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department Code</label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="e.g. PURCH, SUPPLY"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department Head</label>
-              <input
-                type="text"
-                value={head}
-                onChange={(e) => setHead(e.target.value)}
-                placeholder="e.g. Jane Doe"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Parent Department</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Source Category Type</label>
               <select
-                value={parentDepartment}
-                onChange={(e) => setParentDepartment(e.target.value)}
+                value={sourceType}
+                onChange={(e) => setSourceType(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
               >
-                <option value="">None (Top Level)</option>
-                {departments.map((dept) => (
-                  <option key={dept._id} value={dept._id}>
-                    {dept.name} ({dept.code})
-                  </option>
-                ))}
+                <option value="Purchase">Purchase item</option>
+                <option value="Manufacturing">Manufacturing input</option>
+                <option value="Expense">Expense category</option>
+                <option value="Fleet">Fleet/fuel type</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Employee Count</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unit of Measurement</label>
+              <input
+                type="text"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="e.g. L, kWh, kg, km"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">CO2e Factor (kg CO2e per Unit)</label>
               <input
                 type="number"
-                value={employeeCount}
-                onChange={(e) => setEmployeeCount(e.target.value)}
-                min="0"
+                step="any"
+                value={co2eFactor}
+                onChange={(e) => setCo2eFactor(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Effective Date</label>
+              <input
+                type="date"
+                value={effectiveDate}
+                onChange={(e) => setEffectiveDate(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</label>
-              <div className="flex gap-4 pt-1">
+              <div className="flex gap-4 pt-1.5">
                 <label className="flex items-center gap-2 text-sm text-slate-300 font-semibold cursor-pointer">
                   <input
                     type="radio"
@@ -293,14 +297,36 @@ function Departments() {
                 type="submit"
                 className="w-full px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-955 font-bold rounded-xl shadow-lg transition"
               >
-                Create Department
+                Create Emission Factor
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Main Content Grid */}
+      {/* Filter and Content List */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+        <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+          <Filter className="w-4 h-4 text-emerald-400" />
+          Filter by Source:
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {['', 'Purchase', 'Manufacturing', 'Expense', 'Fleet'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setSelectedSourceType(type)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
+                selectedSourceType === type 
+                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' 
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {type || 'All'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && (
         <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl flex items-start gap-3 shadow-xl">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -311,22 +337,22 @@ function Departments() {
         </div>
       )}
 
-      {loading && departments.length === 0 ? (
+      {loading && factors.length === 0 ? (
         <div className="text-center py-12 text-slate-400 font-semibold">
-          Loading departments...
+          Loading emission factors...
         </div>
-      ) : departments.length === 0 ? (
+      ) : factors.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center shadow-xl space-y-4">
-          <Building2 className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-300">No departments configured yet</h3>
+          <Leaf className="w-12 h-12 text-slate-600 mx-auto" />
+          <h3 className="text-lg font-bold text-slate-300">No emission factors configured</h3>
           <p className="text-slate-400 text-sm max-w-sm mx-auto font-medium">
-            Start modeling your ESG hierarchy by creating your organization's first department.
+            Define conversion coefficients to enable automatic Scope 1, 2, and 3 calculations.
           </p>
           <button
             onClick={() => setShowAddForm(true)}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-955 font-bold rounded-xl transition"
           >
-            Create First Department
+            Add First Factor
           </button>
         </div>
       ) : (
@@ -336,60 +362,56 @@ function Departments() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-900/50">
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Code / Name</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Dept Head</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Parent Department</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Employees</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name / Source</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Source Type</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">CO2e Factor</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Unit</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Effective Date</th>
                   <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Status</th>
                   <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 bg-slate-900">
-                {departments.map((dept) => (
-                  <tr key={dept._id} className="hover:bg-slate-850/30 transition">
+                {factors.map((factor) => (
+                  <tr key={factor._id} className="hover:bg-slate-850/30 transition">
                     <td className="p-4">
-                      <div className="font-bold text-slate-200">{dept.name}</div>
-                      <code className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-                        {dept.code}
-                      </code>
+                      <div className="font-bold text-slate-200">{factor.name}</div>
                     </td>
-                    <td className="p-4 text-slate-300 font-medium text-sm">
-                      {dept.head || <span className="text-slate-500 italic">Unassigned</span>}
+                    <td className="p-4 text-slate-300 font-semibold text-sm">
+                      <span className="bg-slate-950 px-2.5 py-0.5 rounded border border-slate-850 text-slate-300">
+                        {factor.sourceType}
+                      </span>
                     </td>
-                    <td className="p-4 text-slate-300 font-medium text-sm">
-                      {dept.parentDepartment ? (
-                        <div className="flex flex-col">
-                          <span className="text-slate-300">{dept.parentDepartment.name}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">({dept.parentDepartment.code})</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500 italic">None</span>
-                      )}
+                    <td className="p-4 text-emerald-400 font-mono font-bold text-sm">
+                      {factor.co2eFactor}
                     </td>
-                    <td className="p-4 text-center font-semibold text-slate-200 text-sm">
-                      {dept.employeeCount}
+                    <td className="p-4 text-slate-300 font-semibold text-sm">
+                      {factor.unit}
+                    </td>
+                    <td className="p-4 text-slate-400 font-medium text-xs">
+                      {factor.effectiveDate ? factor.effectiveDate.split('T')[0] : 'N/A'}
                     </td>
                     <td className="p-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        dept.status === 'Active' 
+                        factor.status === 'Active' 
                           ? 'bg-emerald-500/10 text-emerald-400' 
                           : 'bg-slate-800 text-slate-500'
                       }`}>
-                        {dept.status}
+                        {factor.status}
                       </span>
                     </td>
                     <td className="p-4 text-right flex items-center justify-end gap-1">
                       <button
-                        onClick={() => handleEditClick(dept)}
+                        onClick={() => handleEditClick(factor)}
                         className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-950 border border-transparent hover:border-emerald-950 rounded-xl transition duration-200"
-                        title="Edit Department"
+                        title="Edit Factor"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(dept._id)}
+                        onClick={() => handleDeleteClick(factor._id)}
                         className="p-2 text-slate-400 hover:text-rose-500 hover:bg-slate-950 border border-transparent hover:border-rose-950 rounded-xl transition duration-200"
-                        title="Delete Department"
+                        title="Delete Factor"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -402,14 +424,14 @@ function Departments() {
         </div>
       )}
 
-      {/* Edit Department Modal */}
-      {editingDept && (
+      {/* Edit Emission Factor Modal */}
+      {editingFactor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-lg w-full space-y-4 animate-fade-in">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-100">Edit Department</h3>
+              <h3 className="text-lg font-bold text-slate-100">Edit Emission Factor</h3>
               <button
-                onClick={() => setEditingDept(null)}
+                onClick={() => setEditingFactor(null)}
                 className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200"
               >
                 <X className="w-5 h-5" />
@@ -425,7 +447,7 @@ function Departments() {
 
             <form onSubmit={handleEditSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department Name</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Item Name / Description</label>
                 <input
                   type="text"
                   value={editName}
@@ -436,51 +458,48 @@ function Departments() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department Code</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Source Category Type</label>
+                <select
+                  value={editSourceType}
+                  onChange={(e) => setEditSourceType(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="Purchase">Purchase item</option>
+                  <option value="Manufacturing">Manufacturing input</option>
+                  <option value="Expense">Expense category</option>
+                  <option value="Fleet">Fleet/fuel type</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unit of Measurement</label>
                 <input
                   type="text"
-                  value={editCode}
-                  onChange={(e) => setEditCode(e.target.value)}
+                  value={editUnit}
+                  onChange={(e) => setEditUnit(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department Head</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CO2e Factor (kg CO2e / Unit)</label>
                 <input
-                  type="text"
-                  value={editHead}
-                  onChange={(e) => setEditHead(e.target.value)}
+                  type="number"
+                  step="any"
+                  value={editCo2eFactor}
+                  onChange={(e) => setEditCo2eFactor(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                  required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Parent Department</label>
-                <select
-                  value={editParentDepartment}
-                  onChange={(e) => setEditParentDepartment(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="">None (Top Level)</option>
-                  {departments
-                    .filter((d) => d._id !== editingDept._id) // Prevent self-parenting
-                    .map((dept) => (
-                      <option key={dept._id} value={dept._id}>
-                        {dept.name} ({dept.code})
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee Count</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Effective Date</label>
                 <input
-                  type="number"
-                  value={editEmployeeCount}
-                  onChange={(e) => setEditEmployeeCount(e.target.value)}
-                  min="0"
+                  type="date"
+                  value={editEffectiveDate}
+                  onChange={(e) => setEditEffectiveDate(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
@@ -512,7 +531,7 @@ function Departments() {
               <div className="sm:col-span-2 pt-2 flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setEditingDept(null)}
+                  onClick={() => setEditingFactor(null)}
                   className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition"
                 >
                   Cancel
@@ -537,9 +556,9 @@ function Departments() {
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-slate-100">Delete Department</h3>
+              <h3 className="text-lg font-bold text-slate-100">Delete Emission Factor</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Are you sure you want to delete this department? Any sub-departments will have their parent link removed. This action cannot be undone.
+                Are you sure you want to delete this emission factor? This action cannot be undone.
               </p>
             </div>
             <div className="flex gap-3 pt-2">
@@ -577,4 +596,4 @@ function Departments() {
   );
 }
 
-export default Departments;
+export default EmissionFactors;
