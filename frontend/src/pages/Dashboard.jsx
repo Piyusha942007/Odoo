@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Server, Database, CheckCircle2, AlertTriangle, RefreshCw, Award } from 'lucide-react';
+import { 
+  Server, 
+  Database, 
+  CheckCircle2, 
+  AlertTriangle, 
+  RefreshCw, 
+  Award, 
+  TrendingUp, 
+  Leaf, 
+  Users, 
+  ShieldCheck 
+} from 'lucide-react';
 
 function Dashboard() {
   const [health, setHealth] = useState({ api: 'checking', db: 'checking' });
@@ -31,13 +42,48 @@ function Dashboard() {
     checkSystemHealth();
   }, []);
 
+  const cards = [
+    {
+      title: 'Environmental Score',
+      value: '82 / 100',
+      change: '+4.2% from last month',
+      icon: Leaf,
+      color: 'from-emerald-500 to-teal-500',
+      textColor: 'text-emerald-400'
+    },
+    {
+      title: 'Social & CSR Hours',
+      value: '320 Hrs',
+      change: '74% participation rate',
+      icon: Users,
+      color: 'from-blue-500 to-indigo-500',
+      textColor: 'text-blue-400'
+    },
+    {
+      title: 'Policy Acknowledgement',
+      value: '95.0%',
+      change: '8 Active policies',
+      icon: ShieldCheck,
+      color: 'from-purple-500 to-pink-500',
+      textColor: 'text-purple-400'
+    },
+    {
+      title: 'Open Compliance Issues',
+      value: '2 Issues',
+      change: '14 resolved this quarter',
+      icon: AlertTriangle,
+      color: 'from-amber-500 to-orange-500',
+      textColor: 'text-amber-400'
+    }
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
-        <div className="space-y-2 font-sans">
-          <h2 className="text-3xl font-extrabold text-slate-100">Welcome to EcoSphere</h2>
-          <p className="text-slate-400 font-medium">ESG Management Platform — Integrated Developer Hub</p>
+    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">ESG Command Center</h1>
+          <p className="text-slate-400 mt-2 font-medium text-sm">Real-time oversight across Environmental, Social, and Governance metrics.</p>
         </div>
         <button
           onClick={checkSystemHealth}
@@ -49,9 +95,33 @@ function Dashboard() {
         </button>
       </div>
 
+      {/* Grid of Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {cards.map((card) => (
+          <div 
+            key={card.title}
+            className="relative overflow-hidden rounded-2xl border border-slate-900 bg-slate-950 p-6 shadow-xl hover:border-slate-800 transition-all duration-300 group"
+          >
+            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full bg-gradient-to-tr ${card.color} opacity-5 blur-xl group-hover:opacity-10 transition-opacity`} />
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-500">{card.title}</span>
+              <div className={`p-2 rounded-xl bg-gradient-to-tr ${card.color} bg-opacity-10 text-white shadow-md`}>
+                <card.icon size={20} />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-slate-100 tracking-tight">{card.value}</span>
+              <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-slate-500">
+                <TrendingUp size={14} className={card.textColor} />
+                <span>{card.change}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Connection Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Backend API Connection Status */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-xl">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -84,7 +154,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Database Connection Status */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-xl">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -118,16 +187,27 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Social & Gamification Hour 1 Module Status */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-4 shadow-xl">
-        <div className="flex items-center gap-3">
-          <Award className="w-6 h-6 text-purple-400" />
-          <h3 className="text-lg font-bold text-slate-200">Social & Gamification Module (Khushi's Track)</h3>
+      {/* Module Overview Banners */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="w-6 h-6 text-purple-400" />
+            <h3 className="text-lg font-bold text-slate-200">Governance & Compliance (Anvi's Track)</h3>
+          </div>
+          <p className="text-sm text-slate-400 leading-relaxed font-medium">
+            Member 3 has initialized the Governance and Reports modules. You can manage Policies, view active Compliance Audits/Issues, and browse generated disclosure packages from the navigation sidebar.
+          </p>
         </div>
-        <p className="text-sm text-slate-400 leading-relaxed font-medium">
-          This dashboard displays status details for the <code className="text-purple-400 font-mono">feature/social-gamification</code> branch. 
-          The Category, CSR Activities, and Challenges models and page foundations are loaded and accessible in the navigation sidebar.
-        </p>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center gap-3">
+            <Award className="w-6 h-6 text-indigo-400" />
+            <h3 className="text-lg font-bold text-slate-200">Social & Gamification (Khushi's Track)</h3>
+          </div>
+          <p className="text-sm text-slate-400 leading-relaxed font-medium">
+            The Category Master, CSR Activities, and Challenges models and page foundations are loaded and active. Teammates can manage CSR definitions and track rewards through the navigation panel.
+          </p>
+        </div>
       </div>
 
       {/* System Status Details */}

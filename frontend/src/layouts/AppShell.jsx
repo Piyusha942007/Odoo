@@ -13,7 +13,10 @@ import {
   X,
   Folder,
   Calendar,
-  Compass
+  Compass,
+  ShieldCheck,
+  ShieldAlert,
+  BarChart3
 } from 'lucide-react';
 
 function AppShell() {
@@ -26,8 +29,9 @@ function AppShell() {
     { name: 'Category Master', to: '/categories', icon: Folder },
     { name: 'CSR Activities', to: '/csr', icon: Calendar },
     { name: 'Challenges', to: '/challenges', icon: Compass },
-    { name: 'Governance', to: '/governance', icon: Shield },
-    { name: 'Reports & Analytics', to: '/reports', icon: FileBarChart },
+    { name: 'Policies', to: '/governance/policies', icon: ShieldCheck },
+    { name: 'Audits & Issues', to: '/governance/audits', icon: ShieldAlert },
+    { name: 'Reports Center', to: '/governance/reports', icon: BarChart3 },
     { name: 'Settings', to: '/settings', icon: Settings },
   ];
 

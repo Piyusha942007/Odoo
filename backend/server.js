@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +45,11 @@ const departmentRoutes = require('./routes/departmentRoutes');
 // Mount routes
 app.use('/api/departments', departmentRoutes);
 app.use('/api/social', require('./routes/socialRoutes'));
+
+// Mount Governance module routes
+app.use('/api/governance/policies', require('./routes/policyRoutes'));
+app.use('/api/governance/audits', require('./routes/auditRoutes'));
+app.use('/api/governance/reports', require('./routes/reportRoutes'));
 
 // 404 Route handler
 app.use((req, res, next) => {
