@@ -132,6 +132,7 @@ router.get('/departments', async (req, res) => {
 router.get('/participations', async (req, res) => {
   try {
     const participations = await EmployeeParticipation.find()
+      .populate('department')
       .populate({
         path: 'activity',
         populate: [
@@ -148,7 +149,7 @@ router.get('/participations', async (req, res) => {
 // POST create participation
 router.post('/participations', async (req, res) => {
   try {
-    const { employee, activity, proof, completionDate } = req.body;
+    const { employee, activity, proof, completionDate, department } = req.body;
     
     // Find the activity to check default points
     const act = await CsrActivity.findById(activity);
@@ -160,12 +161,14 @@ router.post('/participations', async (req, res) => {
       employee,
       activity,
       proof,
+      department: department || act.department, // default to activity's department if not provided
       completionDate: completionDate || new Date(),
       approvalStatus: 'Pending',
       pointsEarned: 0 // Zero until approved
     });
 
     const populated = await EmployeeParticipation.findById(participation._id)
+      .populate('department')
       .populate({
         path: 'activity',
         populate: [
@@ -183,16 +186,19 @@ router.post('/participations', async (req, res) => {
 // PUT update participation (including approval and awarding points)
 router.put('/participations/:id', async (req, res) => {
   try {
-    const { employee, proof, approvalStatus, completionDate } = req.body;
+    const { employee, proof, approvalStatus, completionDate, department } = req.body;
     const part = await EmployeeParticipation.findById(req.params.id).populate('activity');
     if (!part) {
       return res.status(404).json({ success: false, message: 'Participation not found' });
     }
 
     // Business Rule check:
-    // If approvalStatus is being set to Approved, check if proof is present.
+    // If approvalStatus is being set to Approved, check if proof is present and required.
     if (approvalStatus === 'Approved') {
-      if (!proof || !proof.trim()) {
+      const EsgSettings = require('../models/EsgSettings');
+      const settings = await EsgSettings.findOne();
+      const evidenceRequired = settings ? settings.csrEvidenceRequired : false;
+      if (evidenceRequired && (!proof || !proof.trim())) {
         return res.status(400).json({
           success: false,
           message: 'Cannot approve participation without an attached proof file/link.'
@@ -203,6 +209,7 @@ router.put('/participations/:id', async (req, res) => {
     part.employee = employee !== undefined ? employee : part.employee;
     part.proof = proof !== undefined ? proof : part.proof;
     part.completionDate = completionDate !== undefined ? completionDate : part.completionDate;
+    part.department = department !== undefined ? department : part.department;
     
     if (approvalStatus !== undefined) {
       part.approvalStatus = approvalStatus;
@@ -219,9 +226,14 @@ router.put('/participations/:id', async (req, res) => {
     if (approvalStatus === 'Approved') {
       const { checkAndAwardBadges } = require('../utils/gamificationEngine');
       await checkAndAwardBadges(part.employee);
+      
+      // Trigger ESG score recomputation
+      const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+      await recomputeAllDepartmentScores();
     }
     
     const populated = await EmployeeParticipation.findById(part._id)
+      .populate('department')
       .populate({
         path: 'activity',
         populate: [
@@ -242,7 +254,127 @@ router.delete('/participations/:id', async (req, res) => {
     if (!part) {
       return res.status(404).json({ success: false, message: 'Participation not found' });
     }
+    // Trigger ESG score recomputation
+    const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+    await recomputeAllDepartmentScores();
+
     res.json({ success: true, message: 'Participation deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// TRAINING COMPLETION CRUD
+// ==========================================
+const TrainingCompletion = require('../models/TrainingCompletion');
+
+// GET training completions
+router.get('/training', async (req, res) => {
+  try {
+    const completions = await TrainingCompletion.find().populate('department');
+    res.json({ success: true, data: completions });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST create training completion
+router.post('/training', async (req, res) => {
+  try {
+    const completion = await TrainingCompletion.create(req.body);
+    const populated = await TrainingCompletion.findById(completion._id).populate('department');
+    
+    // Trigger ESG score recomputation
+    const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+    await recomputeAllDepartmentScores();
+
+    res.json({ success: true, data: populated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE training completion
+router.delete('/training/:id', async (req, res) => {
+  try {
+    const deleted = await TrainingCompletion.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Training completion record not found' });
+    }
+
+    // Trigger ESG score recomputation
+    const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+    await recomputeAllDepartmentScores();
+
+    res.json({ success: true, message: 'Training completion record deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// DIVERSITY METRICS CONFIGURATION
+// ==========================================
+router.put('/departments/:id/diversity', async (req, res) => {
+  try {
+    const { genderRatio, ageBands } = req.body;
+    const dept = await Department.findById(req.params.id);
+    if (!dept) {
+      return res.status(404).json({ success: false, message: 'Department not found' });
+    }
+
+    if (genderRatio) dept.diversityMetrics.genderRatio = genderRatio;
+    if (ageBands) {
+      if (ageBands.under30 !== undefined) dept.diversityMetrics.ageBands.under30 = ageBands.under30;
+      if (ageBands.thirtyToFifty !== undefined) dept.diversityMetrics.ageBands.thirtyToFifty = ageBands.thirtyToFifty;
+      if (ageBands.over50 !== undefined) dept.diversityMetrics.ageBands.over50 = ageBands.over50;
+    }
+
+    await dept.save();
+
+    // Trigger ESG score recomputation
+    const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+    await recomputeAllDepartmentScores();
+
+    res.json({ success: true, data: dept });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// SOCIAL DASHBOARD METRICS
+// ==========================================
+router.get('/dashboard-metrics', async (req, res) => {
+  try {
+    const depts = await Department.find();
+    const trainingCount = await TrainingCompletion.countDocuments({ status: 'Completed' });
+    const activeCsrCount = await CsrActivity.countDocuments({ status: 'Active' });
+    const totalParticipations = await EmployeeParticipation.countDocuments();
+    const approvedParticipations = await EmployeeParticipation.countDocuments({ approvalStatus: 'Approved' });
+
+    // Average social score
+    const avgSocialScore = depts.length > 0
+      ? Math.round(depts.reduce((sum, d) => sum + (d.socialScore || 0), 0) / depts.length)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        trainingCount,
+        activeCsrCount,
+        totalParticipations,
+        approvedParticipations,
+        avgSocialScore,
+        departments: depts.map(d => ({
+          name: d.name,
+          employeeCount: d.employeeCount,
+          socialScore: d.socialScore || 0,
+          diversityMetrics: d.diversityMetrics
+        }))
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
