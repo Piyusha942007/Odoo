@@ -33,9 +33,16 @@ if (!mongoURI) {
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: "EcoSphere API is running"
+    message: "EcoSphere API is running",
+    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
+
+// Import Department routes
+const departmentRoutes = require('./routes/departmentRoutes');
+
+// Mount routes
+app.use('/api/departments', departmentRoutes);
 
 // 404 Route handler
 app.use((req, res, next) => {
