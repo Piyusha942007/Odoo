@@ -473,16 +473,24 @@ function CsrActivitiesPage() {
               </div>
               <div>
                 <label className="block text-xs text-slate-400 mb-1 font-semibold">CSR Activity *</label>
-                <select
-                  required
-                  value={newPart.activity}
-                  onChange={(e) => setNewPart(prev => ({ ...prev, activity: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded p-2.5 text-slate-200 text-sm focus:outline-none"
-                >
-                  {activities.map((a) => (
-                    <option key={a._id} value={a._id} className="bg-slate-900 text-slate-100">{a.title} ({a.points} pts)</option>
-                  ))}
-                </select>
+                {activities.length === 0 ? (
+                  <div className="text-xs text-rose-450 p-2.5 bg-rose-500/10 border border-rose-500/20 rounded font-semibold">
+                    No activities available. Create a CSR Activity first in the "Activities Registry" tab!
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={newPart.activity}
+                    onChange={(e) => setNewPart(prev => ({ ...prev, activity: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded p-2.5 text-slate-105 text-sm focus:outline-none focus:border-emerald-500 font-medium"
+                  >
+                    {activities.map((a) => (
+                      <option key={a._id} value={a._id} className="bg-slate-950 text-slate-105">
+                        {a.title} ({a.points || 50} pts)
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="block text-xs text-slate-400 font-semibold">Proof of Involvement (Link or Photo)</label>

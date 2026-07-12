@@ -214,6 +214,12 @@ router.put('/participations/:id', async (req, res) => {
     }
 
     await part.save();
+
+    // Auto-award badges if eligible
+    if (approvalStatus === 'Approved') {
+      const { checkAndAwardBadges } = require('../utils/gamificationEngine');
+      await checkAndAwardBadges(part.employee);
+    }
     
     const populated = await EmployeeParticipation.findById(part._id)
       .populate({

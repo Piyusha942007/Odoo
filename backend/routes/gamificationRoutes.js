@@ -181,6 +181,12 @@ router.put('/participations/:id', async (req, res) => {
 
     await part.save();
 
+    // Auto-award badges if eligible
+    if (approvalStatus === 'Approved') {
+      const { checkAndAwardBadges } = require('../utils/gamificationEngine');
+      await checkAndAwardBadges(part.employee);
+    }
+
     const populated = await ChallengeParticipation.findById(part._id)
       .populate({
         path: 'challenge',
@@ -211,6 +217,274 @@ router.get('/categories', async (req, res) => {
   try {
     const categories = await Category.find({ type: 'Challenge' });
     res.json({ success: true, data: categories });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Import new models and helpers
+const Badge = require('../models/Badge');
+const EmployeeBadge = require('../models/EmployeeBadge');
+const Reward = require('../models/Reward');
+const Redemption = require('../models/Redemption');
+const EsgSettings = require('../models/EsgSettings');
+const EmployeeParticipation = require('../models/EmployeeParticipation');
+const { getEmployeeStats, checkAndAwardBadges } = require('../utils/gamificationEngine');
+
+// ==========================================
+// ESG SETTINGS ENDPOINTS
+// ==========================================
+router.get('/settings', async (req, res) => {
+  try {
+    let settings = await EsgSettings.findOne();
+    if (!settings) {
+      settings = await EsgSettings.create({ badgeAutoAward: true });
+    }
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/settings', async (req, res) => {
+  try {
+    const { badgeAutoAward } = req.body;
+    let settings = await EsgSettings.findOne();
+    if (!settings) {
+      settings = await EsgSettings.create({ badgeAutoAward });
+    } else {
+      settings.badgeAutoAward = badgeAutoAward;
+      await settings.save();
+    }
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// BADGES CRUD ENDPOINTS
+// ==========================================
+router.get('/badges', async (req, res) => {
+  try {
+    const badges = await Badge.find();
+    res.json({ success: true, data: badges });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/badges', async (req, res) => {
+  try {
+    const badge = await Badge.create(req.body);
+    res.json({ success: true, data: badge });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/badges/:id', async (req, res) => {
+  try {
+    const badge = await Badge.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!badge) {
+      return res.status(404).json({ success: false, message: 'Badge not found' });
+    }
+    res.json({ success: true, data: badge });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/badges/:id', async (req, res) => {
+  try {
+    const badge = await Badge.findByIdAndDelete(req.params.id);
+    if (!badge) {
+      return res.status(404).json({ success: false, message: 'Badge not found' });
+    }
+    // Also delete earned records for this badge
+    await EmployeeBadge.deleteMany({ badge: req.params.id });
+    res.json({ success: true, message: 'Badge deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// EARNED BADGES ENDPOINTS
+// ==========================================
+router.get('/badges/earned', async (req, res) => {
+  try {
+    const earned = await EmployeeBadge.find().populate('badge');
+    res.json({ success: true, data: earned });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/badges/earned/:employee', async (req, res) => {
+  try {
+    const earned = await EmployeeBadge.find({ employee: req.params.employee }).populate('badge');
+    res.json({ success: true, data: earned });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Manual award badge route (as fallback if Auto-Award is off)
+router.post('/badges/award', async (req, res) => {
+  try {
+    const { employee, badgeId } = req.body;
+    const badge = await Badge.findById(badgeId);
+    if (!badge) {
+      return res.status(404).json({ success: false, message: 'Badge not found' });
+    }
+
+    const earned = await EmployeeBadge.create({ employee, badge: badgeId });
+    const populated = await EmployeeBadge.findById(earned._id).populate('badge');
+    res.json({ success: true, data: populated });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Badge already awarded to this employee.' });
+    }
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// REWARDS CRUD & REDEMPTION
+// ==========================================
+router.get('/rewards', async (req, res) => {
+  try {
+    const rewards = await Reward.find();
+    res.json({ success: true, data: rewards });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/rewards', async (req, res) => {
+  try {
+    const reward = await Reward.create(req.body);
+    res.json({ success: true, data: reward });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/rewards/:id', async (req, res) => {
+  try {
+    const reward = await Reward.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!reward) {
+      return res.status(404).json({ success: false, message: 'Reward not found' });
+    }
+    res.json({ success: true, data: reward });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/rewards/:id', async (req, res) => {
+  try {
+    const reward = await Reward.findByIdAndDelete(req.params.id);
+    if (!reward) {
+      return res.status(404).json({ success: false, message: 'Reward not found' });
+    }
+    res.json({ success: true, message: 'Reward deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/rewards/redeem', async (req, res) => {
+  try {
+    const { employee, rewardId } = req.body;
+    if (!employee || !rewardId) {
+      return res.status(400).json({ success: false, message: 'Employee name and rewardId are required.' });
+    }
+
+    const reward = await Reward.findById(rewardId);
+    if (!reward) {
+      return res.status(404).json({ success: false, message: 'Reward not found' });
+    }
+
+    if (reward.status === 'Inactive') {
+      return res.status(400).json({ success: false, message: 'Cannot redeem inactive reward.' });
+    }
+
+    if (reward.stock <= 0) {
+      return res.status(400).json({ success: false, message: 'Reward is out of stock.' });
+    }
+
+    // Points balance check
+    const stats = await getEmployeeStats(employee);
+    if (stats.currentPoints < reward.pointsRequired) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient points. Required: ${reward.pointsRequired}, Available: ${stats.currentPoints}`
+      });
+    }
+
+    // Decrement stock and create redemption record
+    reward.stock -= 1;
+    await reward.save();
+
+    const redemption = await Redemption.create({
+      employee,
+      reward: reward._id,
+      pointsSpent: reward.pointsRequired
+    });
+
+    const populated = await Redemption.findById(redemption._id).populate('reward');
+    res.json({ success: true, data: populated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/redemptions', async (req, res) => {
+  try {
+    const redemptions = await Redemption.find().populate('reward');
+    res.json({ success: true, data: redemptions });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// LEADERBOARD & EMPLOYEE STATS
+// ==========================================
+router.get('/profile/:employee', async (req, res) => {
+  try {
+    const stats = await getEmployeeStats(req.params.employee);
+    res.json({ success: true, data: stats });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { department } = req.query;
+
+    const employeesCsr = await EmployeeParticipation.distinct('employee');
+    const employeesChallenge = await ChallengeParticipation.distinct('employee');
+    const uniqueEmployees = Array.from(new Set([...employeesCsr, ...employeesChallenge]));
+
+    const leaderboard = [];
+    for (const emp of uniqueEmployees) {
+      if (!emp) continue;
+      const stats = await getEmployeeStats(emp);
+      leaderboard.push(stats);
+    }
+
+    // Sort by totalXp descending
+    let sorted = leaderboard.sort((a, b) => b.totalXp - a.totalXp);
+
+    if (department) {
+      sorted = sorted.filter(item => item.departmentName.toLowerCase() === department.toLowerCase());
+    }
+
+    res.json({ success: true, data: sorted });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
