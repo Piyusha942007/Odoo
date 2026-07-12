@@ -172,6 +172,10 @@ router.post('/', async (req, res, next) => {
 // DELETE a saved report template
 router.delete('/:id', async (req, res, next) => {
   try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid report template ID format' });
+    }
     const deletedReport = await Report.findByIdAndDelete(req.params.id);
     if (!deletedReport) {
       return res.status(404).json({ success: false, message: 'Report template not found' });
