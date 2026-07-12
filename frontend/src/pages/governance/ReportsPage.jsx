@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../../context/AlertContext';
 import axios from 'axios';
 import { 
   BarChart3, 
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 function ReportsPage() {
+  const { alert: customAlert, confirm: customConfirm } = useAlert();
   const [reportType, setReportType] = useState('ESG Summary');
   const [departments, setDepartments] = useState([]);
   const [savedTemplates, setSavedTemplates] = useState([]);
@@ -75,7 +77,7 @@ function ReportsPage() {
       }
     } catch (err) {
       console.error('Error generating ESG report:', err);
-      alert('Failed to compile report data.');
+      customAlert('Error', 'Failed to compile report data.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +91,7 @@ function ReportsPage() {
   const handleSaveTemplate = async (e) => {
     e.preventDefault();
     if (!templateName.trim()) {
-      alert('Please enter a template name.');
+      customAlert('Warning', 'Please enter a template name.', 'warning');
       return;
     }
 
@@ -104,18 +106,19 @@ function ReportsPage() {
       if (res.data?.success) {
         setSavedTemplates([res.data.data, ...savedTemplates]);
         setTemplateName('');
-        alert('Report template saved successfully.');
+        customAlert('Success', 'Report template saved successfully.', 'success');
       }
     } catch (err) {
       console.error('Error saving report template:', err);
-      alert('Failed to save template.');
+      customAlert('Error', 'Failed to save template.', 'error');
     } finally {
       setIsSavingTemplate(false);
     }
   };
 
   const handleDeleteTemplate = async (templateId) => {
-    if (!window.confirm('Are you sure you want to delete this report template?')) return;
+    const isConfirmed = await customConfirm('Delete Template', 'Are you sure you want to delete this report template?', 'error');
+    if (!isConfirmed) return;
     try {
       const res = await axios.delete(`${API_URL}/${templateId}`);
       if (res.data?.success) {
@@ -123,6 +126,7 @@ function ReportsPage() {
       }
     } catch (err) {
       console.error('Error deleting template:', err);
+      customAlert('Error', 'Failed to delete report template.', 'error');
     }
   };
 
@@ -251,7 +255,7 @@ function ReportsPage() {
               <button 
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-700 text-slate-950 font-bold rounded-xl transition-all flex items-center justify-center gap-2 mt-6 text-sm"
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:from-indigo-850 disabled:to-violet-950 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-6 text-sm shadow-lg shadow-indigo-500/20"
               >
                 {isLoading ? (
                   <RefreshCw className="animate-spin" size={16} />

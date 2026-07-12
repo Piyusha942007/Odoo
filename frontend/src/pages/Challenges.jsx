@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAlert } from '../context/AlertContext';
 import { 
   getChallenges, 
   createChallenge, 
@@ -32,6 +33,7 @@ import {
 } from 'lucide-react';
 
 function Challenges() {
+  const { confirm, toast } = useAlert();
   const [activeTab, setActiveTab] = useState('employee-view'); // 'employee-view', 'admin-view', 'participations', 'badges-tab', 'rewards-tab', 'leaderboard-tab'
   
   // Data lists
@@ -135,13 +137,11 @@ function Challenges() {
   }, [leaderboardDept]);
 
   const triggerSuccess = (msg) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    toast(msg, 'success');
   };
 
   const triggerError = (msg) => {
-    setErrorMsg(msg);
-    setTimeout(() => setErrorMsg(''), 5000);
+    toast(msg, 'error');
   };
 
   // Settings Toggle
@@ -222,7 +222,8 @@ function Challenges() {
 
   // Delete Badge
   const handleDeleteBadge = async (id) => {
-    if (!window.confirm("Delete this badge template and all earned records for it?")) return;
+    const isConfirmed = await confirm("Delete Badge", "Are you sure you want to delete this badge template and all earned records for it?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteBadge(id);
       if (res.success) {
@@ -252,7 +253,8 @@ function Challenges() {
 
   // Delete Reward
   const handleDeleteReward = async (id) => {
-    if (!window.confirm("Remove this reward from the catalog?")) return;
+    const isConfirmed = await confirm("Remove Reward", "Are you sure you want to remove this reward from the catalog?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteReward(id);
       if (res.success) {
@@ -393,7 +395,8 @@ function Challenges() {
   };
 
   const handleDeleteParticipation = async (id) => {
-    if (!window.confirm("Delete this challenge log?")) return;
+    const isConfirmed = await confirm("Delete Participation Log", "Are you sure you want to delete this challenge log?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteChallengeParticipation(id);
       if (res.success) {
@@ -406,7 +409,8 @@ function Challenges() {
   };
 
   const handleDeleteChallenge = async (id) => {
-    if (!window.confirm("Permanently delete this Challenge template?")) return;
+    const isConfirmed = await confirm("Delete Challenge Template", "Are you sure you want to permanently delete this Challenge template?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteChallenge(id);
       if (res.success) {
@@ -432,17 +436,7 @@ function Challenges() {
   return (
     <div className="flex flex-col min-h-full bg-slate-950 text-slate-100 p-6 md:p-8">
       
-      {/* Alerts */}
-      {errorMsg && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl mb-6 text-sm">
-          {errorMsg}
-        </div>
-      )}
-      {successMsg && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl mb-6 text-sm">
-          {successMsg}
-        </div>
-      )}
+      {/* Toasts are now handled globally via AlertContext */}
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">

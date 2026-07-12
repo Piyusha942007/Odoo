@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../../context/AlertContext';
 import axios from 'axios';
 import { ShieldCheck, Plus, CheckCircle, Search, FileText, Loader2, Edit, Trash2 } from 'lucide-react';
 
 function PoliciesPage() {
+  const { alert: customAlert, confirm: customConfirm } = useAlert();
   const [policies, setPolicies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -125,7 +127,7 @@ function PoliciesPage() {
       }
     } catch (err) {
       console.error('Error creating policy:', err);
-      alert('Failed to save policy to MongoDB database.');
+      customAlert('Error', 'Failed to save policy to MongoDB database.', 'error');
     }
   };
 
@@ -145,12 +147,13 @@ function PoliciesPage() {
       }
     } catch (err) {
       console.error('Error updating policy:', err);
-      alert('Failed to update policy in MongoDB database.');
+      customAlert('Error', 'Failed to update policy in MongoDB database.', 'error');
     }
   };
 
   const handleDelete = async (policyId) => {
-    if (!window.confirm('Are you sure you want to delete this policy? This will delete all associated signatures.')) {
+    const isConfirmed = await customConfirm('Delete Policy', 'Are you sure you want to delete this policy? This will delete all associated signatures.', 'error');
+    if (!isConfirmed) {
       return;
     }
     try {
@@ -164,7 +167,7 @@ function PoliciesPage() {
       }
     } catch (err) {
       console.error('Error deleting policy:', err);
-      alert('Failed to delete policy from database.');
+      customAlert('Error', 'Failed to delete policy from database.', 'error');
     }
   };
 
@@ -180,7 +183,7 @@ function PoliciesPage() {
       }
     } catch (err) {
       console.error('Error signing policy:', err);
-      alert('Failed to submit signature.');
+      customAlert('Error', 'Failed to submit signature.', 'error');
     } finally {
       setIsSubmittingAck(false);
     }
@@ -201,7 +204,7 @@ function PoliciesPage() {
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-emerald-500/20"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl font-bold transition-all duration-200 shadow-lg shadow-indigo-500/20"
         >
           <Plus size={18} />
           Create Policy
@@ -340,7 +343,7 @@ function PoliciesPage() {
                     <button 
                       type="submit" 
                       disabled={isSubmittingAck}
-                      className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-700 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                      className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:from-indigo-850 disabled:to-violet-950 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/10"
                     >
                       {isSubmittingAck ? 'Signing...' : 'Sign'}
                     </button>
@@ -466,7 +469,7 @@ function PoliciesPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Save Policy
                 </button>
@@ -564,7 +567,7 @@ function PoliciesPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Save Changes
                 </button>

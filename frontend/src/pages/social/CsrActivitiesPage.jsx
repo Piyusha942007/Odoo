@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAlert } from '../../context/AlertContext';
 import { 
   getCsrActivities, 
   createCsrActivity, 
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 
 function CsrActivitiesPage() {
+  const { confirm, toast } = useAlert();
   const [activeTab, setActiveTab] = useState('activities');
   
   // Data lists
@@ -126,13 +128,11 @@ function CsrActivitiesPage() {
   }, []);
 
   const triggerSuccess = (msg) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    toast(msg, 'success');
   };
 
   const triggerError = (msg) => {
-    setErrorMsg(msg);
-    setTimeout(() => setErrorMsg(''), 5000);
+    toast(msg, 'error');
   };
 
   // Activity Handlers
@@ -192,7 +192,8 @@ function CsrActivitiesPage() {
   };
 
   const handleDeleteActivity = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this activity?")) return;
+    const isConfirmed = await confirm("Delete CSR Activity", "Are you sure you want to delete this activity?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteCsrActivity(id);
       if (res.success) {
@@ -264,7 +265,8 @@ function CsrActivitiesPage() {
   };
 
   const handleDeleteParticipation = async (id) => {
-    if (!window.confirm("Delete this participation log?")) return;
+    const isConfirmed = await confirm("Delete Participation Log", "Are you sure you want to delete this participation log?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteEmployeeParticipation(id);
       if (res.success) {
@@ -304,7 +306,8 @@ function CsrActivitiesPage() {
   };
 
   const handleDeleteTraining = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this training record?")) return;
+    const isConfirmed = await confirm("Delete Training Record", "Are you sure you want to delete this training record?", "error");
+    if (!isConfirmed) return;
     try {
       const res = await deleteTrainingCompletion(id);
       if (res.success) {
@@ -392,19 +395,7 @@ function CsrActivitiesPage() {
   return (
     <div className="flex flex-col min-h-full bg-slate-950 text-slate-100 p-6 md:p-8">
       
-      {/* Alert Banners */}
-      {errorMsg && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-450 p-4 rounded-xl mb-6 text-sm flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-      {successMsg && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl mb-6 text-sm flex items-center gap-2 animate-pulse">
-          <CheckCircle className="w-4 h-4 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
+      {/* Toasts are now handled globally via AlertContext */}
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -482,7 +473,7 @@ function CsrActivitiesPage() {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowCreate(!showCreate)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg text-xs transition"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white font-bold rounded-lg text-xs transition shadow-md shadow-indigo-500/10"
             >
               <Plus className="w-3.5 h-3.5" />
               Create CSR Activity
@@ -560,7 +551,7 @@ function CsrActivitiesPage() {
               </div>
               <div className="col-span-1 md:col-span-2 flex justify-end gap-2">
                 <button type="button" onClick={() => setShowCreate(false)} className="px-3 py-1.5 text-xs bg-slate-800 text-slate-300 rounded hover:bg-slate-700 font-semibold">Cancel</button>
-                <button type="submit" className="px-3 py-1.5 text-xs bg-emerald-600 text-slate-950 rounded font-bold hover:bg-emerald-500">Save Activity</button>
+                <button type="submit" className="px-3 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded font-bold transition shadow-sm shadow-indigo-500/10">Save Activity</button>
               </div>
             </form>
           )}
@@ -653,7 +644,7 @@ function CsrActivitiesPage() {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowJoinForm(!showJoinForm)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg text-xs transition"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white font-bold rounded-lg text-xs transition shadow-md shadow-indigo-500/10"
             >
               <UserCheck className="w-3.5 h-3.5" />
               Log Employee Participation
@@ -761,7 +752,7 @@ function CsrActivitiesPage() {
 
               <div className="col-span-1 md:col-span-2 flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowJoinForm(false)} className="px-3 py-1.5 text-xs bg-slate-800 text-slate-300 rounded hover:bg-slate-700 font-semibold">Cancel</button>
-                <button type="submit" className="px-3 py-1.5 text-xs bg-emerald-600 text-slate-950 rounded font-bold hover:bg-emerald-500">Submit Log</button>
+                <button type="submit" className="px-3 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded font-bold transition shadow-sm shadow-indigo-500/10">Submit Log</button>
               </div>
             </form>
           )}
@@ -877,7 +868,7 @@ function CsrActivitiesPage() {
             </div>
             <button
               onClick={() => setShowCreateTraining(!showCreateTraining)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded-xl font-bold text-xs transition duration-200"
+              className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl font-bold text-xs transition duration-205 shadow-md shadow-indigo-500/10"
             >
               {showCreateTraining ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
               {showCreateTraining ? 'Close Form' : 'Log Training Completion'}
@@ -950,7 +941,7 @@ function CsrActivitiesPage() {
               </div>
               <div className="col-span-1 md:col-span-2 flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowCreateTraining(false)} className="px-3.5 py-2 text-xs bg-slate-800 text-slate-300 rounded font-semibold">Cancel</button>
-                <button type="submit" className="px-3.5 py-2 bg-emerald-600 text-slate-955 rounded font-bold hover:bg-emerald-500">Save training Completion</button>
+                <button type="submit" className="px-3.5 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded font-bold transition shadow-sm shadow-indigo-500/10">Save training Completion</button>
               </div>
             </form>
           )}
@@ -1074,7 +1065,7 @@ function CsrActivitiesPage() {
 
                 <div className="flex justify-end gap-2 text-xs pt-4 border-t border-slate-850">
                   <button type="button" onClick={() => setEditingDept(null)} className="px-3.5 py-2 bg-slate-800 text-slate-300 rounded font-semibold">Cancel</button>
-                  <button type="submit" className="px-3.5 py-2 bg-emerald-600 text-slate-955 rounded font-bold hover:bg-emerald-500">Save Metrics</button>
+                  <button type="submit" className="px-3.5 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded font-bold transition shadow-sm shadow-indigo-500/10">Save Metrics</button>
                 </div>
               </form>
             </div>
