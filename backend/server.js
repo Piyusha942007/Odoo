@@ -53,6 +53,8 @@ app.use('/api/gamification', require('./routes/gamificationRoutes'));
 app.use('/api/governance/policies', require('./routes/policyRoutes'));
 app.use('/api/governance/audits', require('./routes/auditRoutes'));
 app.use('/api/governance/reports', require('./routes/reportRoutes'));
+app.use('/api/governance/notifications', require('./routes/notificationRoutes'));
+app.use('/api/governance/score', require('./routes/governanceScoreRoutes'));
 
 // 404 Route handler
 app.use((req, res, next) => {

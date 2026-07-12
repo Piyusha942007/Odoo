@@ -32,6 +32,7 @@ function AppShell() {
     { name: 'Policies', to: '/governance/policies', icon: ShieldCheck },
     { name: 'Audits & Issues', to: '/governance/audits', icon: ShieldAlert },
     { name: 'Reports Center', to: '/governance/reports', icon: BarChart3 },
+    { name: 'Gov Score & Preferences', to: '/governance/notifications', icon: Shield },
     { name: 'Settings', to: '/settings', icon: Settings },
   ];
 

@@ -45,6 +45,21 @@ router.post('/compliance-issues', async (req, res, next) => {
       status
     });
     const savedIssue = await issue.save();
+
+    // Trigger Notification
+    try {
+      const { triggerNotification } = require('../services/notificationService');
+      await triggerNotification({
+        type: 'Compliance Issue',
+        title: `Compliance Issue Logged: ${savedIssue.title}`,
+        message: `A new compliance issue has been logged for ${savedIssue.owner}. Severity: ${savedIssue.severity}. Due Date: ${new Date(savedIssue.dueDate).toLocaleDateString()}.`,
+        referenceId: savedIssue._id,
+        referenceModel: 'ComplianceIssue'
+      });
+    } catch (err) {
+      console.error('Failed to trigger compliance issue creation notification:', err);
+    }
+
     res.status(201).json({ success: true, data: flagOverdueIfNeeded(savedIssue) });
   } catch (error) {
     next(error);
@@ -67,6 +82,23 @@ router.put('/compliance-issues/:id', async (req, res, next) => {
     if (!updatedIssue) {
       return res.status(404).json({ success: false, message: 'Compliance issue not found' });
     }
+
+    // Trigger Notification
+    try {
+      const { triggerNotification } = require('../services/notificationService');
+      if (status === 'Resolved') {
+        await triggerNotification({
+          type: 'Compliance Issue',
+          title: `Compliance Issue Resolved: ${updatedIssue.title}`,
+          message: `The compliance issue assigned to ${updatedIssue.owner} has been resolved successfully.`,
+          referenceId: updatedIssue._id,
+          referenceModel: 'ComplianceIssue'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to trigger compliance issue update notification:', err);
+    }
+
     res.json({ success: true, data: flagOverdueIfNeeded(updatedIssue) });
   } catch (error) {
     next(error);
