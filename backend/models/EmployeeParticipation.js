@@ -6,6 +6,7 @@ const employeeParticipationSchema = new mongoose.Schema({
   proof: { type: String }, // link or text description of proof
   approvalStatus: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
   pointsEarned: { type: Number, default: 0 },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
   completionDate: { type: Date }
 }, { timestamps: true });
 

@@ -73,4 +73,32 @@ export const deleteEmployeeParticipation = async (id) => {
   return res.data;
 };
 
+// Training Completion CRUD
+export const getTrainingCompletions = async () => {
+  const res = await api.get('/training');
+  return res.data;
+};
+
+export const createTrainingCompletion = async (data) => {
+  const res = await api.post('/training', data);
+  return res.data;
+};
+
+export const deleteTrainingCompletion = async (id) => {
+  const res = await api.delete(`/training/${id}`);
+  return res.data;
+};
+
+// Department Diversity
+export const updateDepartmentDiversity = async (id, data) => {
+  const res = await api.put(`/departments/${id}/diversity`, data);
+  return res.data;
+};
+
+// Social Dashboard Metrics
+export const getSocialDashboardMetrics = async () => {
+  const res = await api.get('/dashboard-metrics');
+  return res.data;
+};
+
 export default api;

@@ -248,14 +248,31 @@ router.get('/settings', async (req, res) => {
 
 router.put('/settings', async (req, res) => {
   try {
-    const { badgeAutoAward } = req.body;
+    const { badgeAutoAward, csrEvidenceRequired, weightCsr, weightChallenge, weightTraining, weightDiversity } = req.body;
     let settings = await EsgSettings.findOne();
     if (!settings) {
-      settings = await EsgSettings.create({ badgeAutoAward });
+      settings = await EsgSettings.create({
+        badgeAutoAward: badgeAutoAward !== undefined ? badgeAutoAward : true,
+        csrEvidenceRequired: csrEvidenceRequired !== undefined ? csrEvidenceRequired : false,
+        weightCsr: weightCsr !== undefined ? weightCsr : 25,
+        weightChallenge: weightChallenge !== undefined ? weightChallenge : 25,
+        weightTraining: weightTraining !== undefined ? weightTraining : 25,
+        weightDiversity: weightDiversity !== undefined ? weightDiversity : 25
+      });
     } else {
-      settings.badgeAutoAward = badgeAutoAward;
+      if (badgeAutoAward !== undefined) settings.badgeAutoAward = badgeAutoAward;
+      if (csrEvidenceRequired !== undefined) settings.csrEvidenceRequired = csrEvidenceRequired;
+      if (weightCsr !== undefined) settings.weightCsr = weightCsr;
+      if (weightChallenge !== undefined) settings.weightChallenge = weightChallenge;
+      if (weightTraining !== undefined) settings.weightTraining = weightTraining;
+      if (weightDiversity !== undefined) settings.weightDiversity = weightDiversity;
       await settings.save();
     }
+    
+    // Trigger ESG score recomputation to apply new weight values
+    const { recomputeAllDepartmentScores } = require('../services/esgCalculationService');
+    await recomputeAllDepartmentScores();
+
     res.json({ success: true, data: settings });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
