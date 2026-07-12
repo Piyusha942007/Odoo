@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../../context/AlertContext';
 import axios from 'axios';
 import { 
   Bell, 
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 function NotificationsPage() {
+  const { alert: customAlert, toast: customToast } = useAlert();
   const [activeTab, setActiveTab] = useState('score');
   const [notifications, setNotifications] = useState([]);
   const [settings, setSettings] = useState({
@@ -69,10 +71,11 @@ function NotificationsPage() {
       const res = await axios.get(`${API_URL}/score`);
       if (res.data?.success) {
         setScoreData(res.data.data);
+        customToast('Score recalculated successfully!', 'success');
       }
     } catch (err) {
       console.error('Error recalculating governance score:', err);
-      alert('Failed to recalculate score.');
+      customAlert('Error', 'Failed to recalculate score.', 'error');
     } finally {
       setIsRefreshingScore(false);
     }
@@ -94,6 +97,7 @@ function NotificationsPage() {
       const res = await axios.delete(`${API_URL}/notifications/${notificationId}`);
       if (res.data?.success) {
         setNotifications(notifications.filter(n => n._id !== notificationId));
+        customToast('Notification deleted.', 'success');
       }
     } catch (err) {
       console.error('Error deleting notification:', err);
@@ -111,11 +115,12 @@ function NotificationsPage() {
 
     try {
       await axios.put(`${API_URL}/notifications/settings`, updatedSettings);
+      customToast('Preferences updated.', 'success');
     } catch (err) {
       console.error('Error updating notification settings:', err);
       // Revert state if request failed
       setSettings(settings);
-      alert('Failed to save settings changes.');
+      customAlert('Error', 'Failed to save settings changes.', 'error');
     }
   };
 

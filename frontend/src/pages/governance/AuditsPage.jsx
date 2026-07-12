@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../../context/AlertContext';
 import axios from 'axios';
 import { Plus, AlertCircle, Calendar, CheckCircle2, Loader2, Edit, Trash2 } from 'lucide-react';
 
 function AuditsPage() {
+  const { alert: customAlert, confirm: customConfirm } = useAlert();
   const [activeTab, setActiveTab] = useState('audits');
   const [audits, setAudits] = useState([]);
   const [issues, setIssues] = useState([]);
@@ -126,7 +128,7 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error creating audit:', err);
-      alert('Failed to save audit to MongoDB database.');
+      customAlert('Error', 'Failed to save audit to MongoDB database.', 'error');
     }
   };
 
@@ -149,12 +151,13 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error updating audit:', err);
-      alert('Failed to update audit.');
+      customAlert('Error', 'Failed to update audit.', 'error');
     }
   };
 
   const handleDeleteAudit = async (auditId) => {
-    if (!window.confirm('Are you sure you want to delete this audit?')) return;
+    const isConfirmed = await customConfirm('Delete Audit', 'Are you sure you want to delete this audit?', 'error');
+    if (!isConfirmed) return;
     try {
       const response = await axios.delete(`${API_URL}/${auditId}`);
       if (response.data && response.data.success) {
@@ -162,7 +165,7 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error deleting audit:', err);
-      alert('Failed to delete audit.');
+      customAlert('Error', 'Failed to delete audit.', 'error');
     }
   };
 
@@ -177,7 +180,7 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error creating compliance issue:', err);
-      alert('Failed to save compliance issue to MongoDB database.');
+      customAlert('Error', 'Failed to save compliance issue to MongoDB database.', 'error');
     }
   };
 
@@ -199,12 +202,13 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error updating compliance issue:', err);
-      alert('Failed to update compliance issue.');
+      customAlert('Error', 'Failed to update compliance issue.', 'error');
     }
   };
 
   const handleDeleteIssue = async (issueId) => {
-    if (!window.confirm('Are you sure you want to delete this compliance issue?')) return;
+    const isConfirmed = await customConfirm('Delete Issue', 'Are you sure you want to delete this compliance issue?', 'error');
+    if (!isConfirmed) return;
     try {
       const response = await axios.delete(`${API_URL}/compliance-issues/${issueId}`);
       if (response.data && response.data.success) {
@@ -213,7 +217,7 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error deleting compliance issue:', err);
-      alert('Failed to delete compliance issue.');
+      customAlert('Error', 'Failed to delete compliance issue.', 'error');
     }
   };
 
@@ -225,7 +229,7 @@ function AuditsPage() {
       }
     } catch (err) {
       console.error('Error resolving issue:', err);
-      alert('Failed to resolve compliance issue.');
+      customAlert('Error', 'Failed to resolve compliance issue.', 'error');
     }
   };
 
@@ -271,7 +275,7 @@ function AuditsPage() {
           </button>
           <button 
             onClick={() => setShowIssueModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all text-sm shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl font-bold transition-all duration-200 text-sm shadow-lg shadow-indigo-500/20"
           >
             <Plus size={16} />
             Log Issue
@@ -529,7 +533,7 @@ function AuditsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Schedule
                 </button>
@@ -626,7 +630,7 @@ function AuditsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Save Changes
                 </button>
@@ -714,7 +718,7 @@ function AuditsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Log Issue
                 </button>
@@ -815,7 +819,7 @@ function AuditsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-indigo-500/10"
                 >
                   Save Changes
                 </button>

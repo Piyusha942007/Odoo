@@ -46,7 +46,7 @@ router.put('/challenges/:id', async (req, res) => {
         'Active': ['Under Review'],
         'Under Review': ['Completed', 'Active'],
         'Completed': [],
-        'Archived': []
+        'Archived': ['Draft', 'Active']
       };
 
       if (!allowedTransitions[challenge.status].includes(status)) {
