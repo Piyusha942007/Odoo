@@ -37,6 +37,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Mount Social & Gamification routes
+app.use('/api/social', require('./routes/socialRoutes'));
+
 // 404 Route handler
 app.use((req, res, next) => {
   res.status(404).json({
