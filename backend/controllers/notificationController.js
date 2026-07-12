@@ -52,6 +52,10 @@ exports.createNotification = async (req, res, next) => {
 // Mark notification as read or unread
 exports.updateNotificationReadStatus = async (req, res, next) => {
   try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid notification ID format' });
+    }
     const { read } = req.body;
     const notification = await Notification.findByIdAndUpdate(
       req.params.id,
@@ -70,6 +74,10 @@ exports.updateNotificationReadStatus = async (req, res, next) => {
 // Delete notification
 exports.deleteNotification = async (req, res, next) => {
   try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid notification ID format' });
+    }
     const notification = await Notification.findByIdAndDelete(req.params.id);
     if (!notification) {
       return res.status(404).json({ success: false, message: 'Notification not found' });

@@ -1,14 +1,39 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Audit, ComplianceIssue } = require('../models/Audit');
 
-// Helper to flag overdue issues in-memory
+// Helper to flag overdue issues in-memory and dispatch notification in background
 const flagOverdueIfNeeded = (doc) => {
   if (!doc) return doc;
   const rawDoc = doc.toObject ? doc.toObject() : doc;
   const now = new Date();
   if (rawDoc.dueDate && new Date(rawDoc.dueDate) < now && !['Resolved', 'Completed', 'Closed'].includes(rawDoc.status)) {
     rawDoc.status = 'Overdue';
+    
+    // Trigger overdue notification asynchronously in background
+    (async () => {
+      try {
+        const Notification = require('../models/Notification');
+        const existing = await Notification.findOne({
+          type: 'Compliance Issue',
+          referenceId: rawDoc._id,
+          title: { $regex: 'OVERDUE', $options: 'i' }
+        });
+        if (!existing) {
+          const { triggerNotification } = require('../services/notificationService');
+          await triggerNotification({
+            type: 'Compliance Issue',
+            title: `Compliance Issue OVERDUE: ${rawDoc.title}`,
+            message: `The compliance issue assigned to ${rawDoc.owner} has passed its due date (${new Date(rawDoc.dueDate).toLocaleDateString()}) and is marked as Overdue.`,
+            referenceId: rawDoc._id,
+            referenceModel: 'ComplianceIssue'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to trigger background overdue compliance notification:', err.message);
+      }
+    })();
   }
   return rawDoc;
 };
@@ -69,6 +94,9 @@ router.post('/compliance-issues', async (req, res, next) => {
 // PUT update compliance issue
 router.put('/compliance-issues/:id', async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid compliance issue ID format' });
+    }
     const { status } = req.body;
     const updateData = { ...req.body };
     if (status === 'Resolved') {
@@ -108,6 +136,9 @@ router.put('/compliance-issues/:id', async (req, res, next) => {
 // DELETE compliance issue
 router.delete('/compliance-issues/:id', async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid compliance issue ID format' });
+    }
     const deletedIssue = await ComplianceIssue.findByIdAndDelete(req.params.id);
     if (!deletedIssue) {
       return res.status(404).json({ success: false, message: 'Compliance issue not found' });
@@ -133,6 +164,9 @@ router.get('/', async (req, res, next) => {
 // GET audit by ID
 router.get('/:id', async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid audit ID format' });
+    }
     const audit = await Audit.findById(req.params.id);
     if (!audit) {
       return res.status(404).json({ success: false, message: 'Audit not found' });
@@ -166,6 +200,9 @@ router.post('/', async (req, res, next) => {
 // PUT update audit
 router.put('/:id', async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid audit ID format' });
+    }
     const updatedAudit = await Audit.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -183,6 +220,9 @@ router.put('/:id', async (req, res, next) => {
 // DELETE audit
 router.delete('/:id', async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid audit ID format' });
+    }
     const deletedAudit = await Audit.findByIdAndDelete(req.params.id);
     if (!deletedAudit) {
       return res.status(404).json({ success: false, message: 'Audit not found' });
