@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getDepartments, createDepartment, deleteDepartment, updateDepartment } from '../services/departmentService';
-import { Building2, Plus, Trash2, AlertCircle, X, Check, Edit3 } from 'lucide-react';
+import { Building2, Plus, Trash2, AlertCircle, X, Check, Edit3, ChevronDown, Sparkles } from 'lucide-react';
 
 function Departments() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Dropdown open states
+  const [parentDropdownOpen, setParentDropdownOpen] = useState(false);
+  const [editParentDropdownOpen, setEditParentDropdownOpen] = useState(false);
+
+  // Refs for clicking outside
+  const parentRef = useRef(null);
+  const editParentRef = useRef(null);
 
   // Form Fields for Create
   const [name, setName] = useState('');
@@ -42,6 +50,19 @@ function Departments() {
       return () => clearTimeout(timer);
     }
   }, [toast.show]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (parentRef.current && !parentRef.current.contains(event.target)) {
+        setParentDropdownOpen(false);
+      }
+      if (editParentRef.current && !editParentRef.current.contains(event.target)) {
+        setEditParentDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchDepartments = async () => {
     setLoading(true);
@@ -237,20 +258,47 @@ function Departments() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" ref={parentRef}>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Parent Department</label>
-              <select
-                value={parentDepartment}
-                onChange={(e) => setParentDepartment(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-              >
-                <option value="">None (Top Level)</option>
-                {departments.map((dept) => (
-                  <option key={dept._id} value={dept._id}>
-                    {dept.name} ({dept.code})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setParentDropdownOpen(!parentDropdownOpen)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 text-left flex justify-between items-center hover:border-slate-700 transition"
+                >
+                  <span className="truncate">
+                    {parentDepartment ? (departments.find(d => d._id === parentDepartment)?.name || 'Select Department...') : 'None (Top Level)'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${parentDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {parentDropdownOpen && (
+                  <div className="absolute z-30 w-full mt-1.5 bg-slate-950 border border-slate-800 rounded-xl max-h-60 overflow-y-auto shadow-2xl py-1 divide-y divide-slate-900 animate-fade-in">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParentDepartment('');
+                        setParentDropdownOpen(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-slate-400 hover:bg-slate-900 hover:text-white transition font-medium"
+                    >
+                      None (Top Level)
+                    </button>
+                    {departments.map((dept) => (
+                      <button
+                        key={dept._id}
+                        type="button"
+                        onClick={() => {
+                          setParentDepartment(dept._id);
+                          setParentDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-900 hover:text-white transition"
+                      >
+                        {dept.name} <span className="text-slate-500 text-xs font-mono ml-1">({dept.code})</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -266,25 +314,29 @@ function Departments() {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</label>
-              <div className="flex gap-4 pt-1">
-                <label className="flex items-center gap-2 text-sm text-slate-300 font-semibold cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={status === 'Active'}
-                    onChange={() => setStatus('Active')}
-                    className="text-emerald-500 focus:ring-0 bg-slate-950 border-slate-800"
-                  />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStatus('Active')}
+                  className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold border transition ${
+                    status === 'Active'
+                      ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
                   Active
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-300 font-semibold cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={status === 'Inactive'}
-                    onChange={() => setStatus('Inactive')}
-                    className="text-emerald-500 focus:ring-0 bg-slate-950 border-slate-800"
-                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatus('Inactive')}
+                  className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold border transition ${
+                    status === 'Inactive'
+                      ? 'bg-rose-500/10 border-rose-500 text-rose-400'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
                   Inactive
-                </label>
+                </button>
               </div>
             </div>
 
@@ -404,13 +456,16 @@ function Departments() {
 
       {/* Edit Department Modal */}
       {editingDept && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-lg w-full space-y-4 animate-fade-in">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-100">Edit Department</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-[fade-in_0.2s_ease-out]">
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.85),0_0_20px_rgba(16,185,129,0.1)] max-w-lg w-full space-y-4 animate-[zoom-in_0.2s_ease-out]">
+            <div className="flex justify-between items-center border-b border-slate-850 pb-3">
+              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+                Edit Department
+              </h3>
               <button
                 onClick={() => setEditingDept(null)}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                className="p-1.5 rounded-xl hover:bg-slate-900 text-slate-400 hover:text-slate-200 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -430,7 +485,7 @@ function Departments() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-850 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
                   required
                 />
               </div>
@@ -441,7 +496,7 @@ function Departments() {
                   type="text"
                   value={editCode}
                   onChange={(e) => setEditCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-850 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
                   required
                 />
               </div>
@@ -452,26 +507,54 @@ function Departments() {
                   type="text"
                   value={editHead}
                   onChange={(e) => setEditHead(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-855 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition"
                 />
               </div>
 
-              <div className="space-y-1">
+              {/* Custom Edit Parent Department Select */}
+              <div className="space-y-1" ref={editParentRef}>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Parent Department</label>
-                <select
-                  value={editParentDepartment}
-                  onChange={(e) => setEditParentDepartment(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="">None (Top Level)</option>
-                  {departments
-                    .filter((d) => d._id !== editingDept._id) // Prevent self-parenting
-                    .map((dept) => (
-                      <option key={dept._id} value={dept._id}>
-                        {dept.name} ({dept.code})
-                      </option>
-                    ))}
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setEditParentDropdownOpen(!editParentDropdownOpen)}
+                    className="w-full bg-slate-900 border border-slate-850 rounded-xl px-3 py-2 text-sm text-slate-200 text-left flex justify-between items-center hover:border-slate-700 transition"
+                  >
+                    <span className="truncate">
+                      {editParentDepartment ? (departments.find(d => d._id === editParentDepartment)?.name || 'Select Department...') : 'None (Top Level)'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${editParentDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {editParentDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-slate-950 border border-slate-850 rounded-xl shadow-2xl py-1 divide-y divide-slate-900 animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditParentDepartment('');
+                          setEditParentDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-slate-400 hover:bg-slate-900 hover:text-white transition font-medium"
+                      >
+                        None (Top Level)
+                      </button>
+                      {departments
+                        .filter((d) => d._id !== editingDept._id) // Prevent self-parenting
+                        .map((dept) => (
+                          <button
+                            key={dept._id}
+                            type="button"
+                            onClick={() => {
+                              setEditParentDepartment(dept._id);
+                              setEditParentDropdownOpen(false);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-900 hover:text-white transition"
+                          >
+                            {dept.name} <span className="text-slate-500 text-xs font-mono ml-1">({dept.code})</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -487,25 +570,29 @@ function Departments() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</label>
-                <div className="flex gap-4 pt-1.5">
-                  <label className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={editStatus === 'Active'}
-                      onChange={() => setEditStatus('Active')}
-                      className="text-emerald-500 focus:ring-0 bg-slate-950 border-slate-800"
-                    />
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditStatus('Active')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                      editStatus === 'Active'
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                        : 'bg-slate-900 border-slate-850 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
                     Active
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={editStatus === 'Inactive'}
-                      onChange={() => setEditStatus('Inactive')}
-                      className="text-emerald-500 focus:ring-0 bg-slate-950 border-slate-800"
-                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditStatus('Inactive')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                      editStatus === 'Inactive'
+                        ? 'bg-rose-500/10 border-rose-500 text-rose-400'
+                        : 'bg-slate-900 border-slate-850 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
                     Inactive
-                  </label>
+                  </button>
                 </div>
               </div>
 

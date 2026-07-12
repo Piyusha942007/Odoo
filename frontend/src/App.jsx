@@ -5,6 +5,9 @@ import Dashboard from './pages/Dashboard';
 import Departments from './pages/Departments';
 import EnvironmentalOverview from './pages/environmental/EnvironmentalOverview';
 import EmissionFactors from './pages/environmental/EmissionFactors';
+import CarbonTransactions from './pages/environmental/CarbonTransactions';
+import ProductEsgProfiles from './pages/environmental/ProductEsgProfiles';
+import SustainabilityGoals from './pages/environmental/SustainabilityGoals';
 import CategoriesPage from './pages/social/CategoriesPage';
 import CsrActivities from './pages/social/CsrActivitiesPage';
 import Challenges from './pages/Challenges';
@@ -23,6 +26,9 @@ function App() {
           <Route path="departments" element={<Departments />} />
           <Route path="environmental" element={<EnvironmentalOverview />} />
           <Route path="environmental/emission-factors" element={<EmissionFactors />} />
+          <Route path="environmental/carbon-transactions" element={<CarbonTransactions />} />
+          <Route path="environmental/product-esg-profiles" element={<ProductEsgProfiles />} />
+          <Route path="environmental/sustainability-goals" element={<SustainabilityGoals />} />
           
           {/* Khushi's Social & Gamification Routes */}
           <Route path="categories" element={<CategoriesPage />} />

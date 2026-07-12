@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Leaf, 
@@ -13,7 +13,8 @@ import {
   FileBarChart, 
   Clock,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Tag
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -28,8 +29,27 @@ import {
   Pie, 
   Cell 
 } from 'recharts';
+import { getCarbonTransactions, getEnvironmentalGoals } from '../../services/environmentalService';
 
 function EnvironmentalOverview() {
+  const [transactionCount, setTransactionCount] = useState(0);
+  const [goalCount, setGoalCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const txRes = await getCarbonTransactions();
+        if (txRes.success) setTransactionCount(txRes.data.length);
+
+        const gRes = await getEnvironmentalGoals();
+        if (gRes.success) setGoalCount(gRes.data.length);
+      } catch (err) {
+        console.error('Failed to fetch dashboard counts:', err);
+      }
+    };
+    fetchCounts();
+  }, []);
+
   // Mock trend data
   const trendData = [
     { name: 'Jan', 'Scope 1': 120, 'Scope 2': 80, 'Scope 3': 210 },
@@ -103,7 +123,13 @@ function EnvironmentalOverview() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Environmental Intelligence</h1>
-            <p className="text-slate-400 text-sm font-medium mt-1">Track emissions, carbon performance, and sustainability targets.</p>
+            <p className="text-slate-400 text-sm font-medium mt-1">Track emissions, carbon performance, and targets.</p>
+            <div className="flex gap-4 mt-2 text-xs font-bold text-emerald-400">
+              <Link to="/environmental/product-esg-profiles" className="hover:underline flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                Product ESG Profiles Configuration →
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -270,7 +296,7 @@ function EnvironmentalOverview() {
         {/* Emission Factors Card */}
         <Link 
           to="/environmental/emission-factors"
-          className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-emerald-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-emerald-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group animate-fade-in"
         >
           <div className="space-y-4">
             <div className="flex justify-between items-start">
@@ -298,14 +324,17 @@ function EnvironmentalOverview() {
         </Link>
 
         {/* Carbon Transactions Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-cyan-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group">
+        <Link 
+          to="/environmental/carbon-transactions"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-cyan-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group animate-fade-in"
+        >
           <div className="space-y-4">
             <div className="flex justify-between items-start">
               <div className="p-3 bg-slate-950 rounded-2xl border border-slate-850 group-hover:border-cyan-500/20 transition">
                 <ClipboardList className="w-6 h-6 text-cyan-400" />
               </div>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
-                Configuration Ready
+                Active
               </span>
             </div>
             <div className="space-y-2">
@@ -316,22 +345,28 @@ function EnvironmentalOverview() {
             </div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span className="text-xs font-semibold text-slate-500">No Transactions Yet</span>
-            <span className="inline-flex items-center gap-1 text-sm font-bold text-slate-500">
-              Coming Soon
+            <span className="text-xs font-semibold text-slate-500">
+              {transactionCount > 0 ? `${transactionCount} Transactions Logged` : 'No Transactions Yet'}
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm font-bold text-cyan-400 group-hover:underline">
+              Manage Ledger
+              <ChevronRight className="w-4 h-4" />
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Sustainability Goals Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-teal-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group">
+        <Link 
+          to="/environmental/sustainability-goals"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 hover:border-teal-500/30 hover:bg-slate-850/20 transition duration-300 shadow-xl flex flex-col justify-between group animate-fade-in"
+        >
           <div className="space-y-4">
             <div className="flex justify-between items-start">
               <div className="p-3 bg-slate-950 rounded-2xl border border-slate-850 group-hover:border-teal-500/20 transition">
                 <Target className="w-6 h-6 text-teal-400" />
               </div>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-500/10 text-teal-400 border border-teal-500/25">
-                Ready
+                Active
               </span>
             </div>
             <div className="space-y-2">
@@ -342,15 +377,18 @@ function EnvironmentalOverview() {
             </div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span className="text-xs font-semibold text-slate-500">No Goals Created</span>
-            <span className="inline-flex items-center gap-1 text-sm font-bold text-slate-500">
-              Coming Soon
+            <span className="text-xs font-semibold text-slate-500">
+              {goalCount > 0 ? `${goalCount} Active Goals` : 'No Goals Created'}
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm font-bold text-teal-400 group-hover:underline">
+              Manage Targets
+              <ChevronRight className="w-4 h-4" />
             </span>
           </div>
-        </div>
+        </Link>
       </div>
 
-      {/* Visual Workflow Section */}
+      {/* Carbon Accounting Methodology Section */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden">
         <div className="space-y-1">
           <h3 className="text-lg font-bold text-slate-200">Carbon Accounting Methodology</h3>
