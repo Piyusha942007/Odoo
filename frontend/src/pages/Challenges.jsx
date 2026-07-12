@@ -746,6 +746,12 @@ function Challenges() {
                               <button onClick={() => handleTransition(chall._id, 'Active')} className="px-2 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 font-bold text-[9px] uppercase">Re-activate</button>
                             </>
                           )}
+                          {chall.status === 'Archived' && (
+                            <>
+                              <button onClick={() => handleTransition(chall._id, 'Draft')} className="px-2 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 font-bold text-[9px] uppercase">Revert to Draft</button>
+                              <button onClick={() => handleTransition(chall._id, 'Active')} className="px-2 py-1 bg-emerald-600/20 text-emerald-400 rounded hover:bg-emerald-600/30 font-bold text-[9px] uppercase">Activate</button>
+                            </>
+                          )}
                           {chall.status !== 'Archived' && (
                             <button onClick={() => handleTransition(chall._id, 'Archived')} className="px-2 py-1 bg-rose-950 text-rose-400 rounded hover:bg-rose-900 font-bold text-[9px] uppercase">Archive</button>
                           )}
