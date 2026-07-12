@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Plus, CheckCircle, Search, FileText, Loader2 } from 'lucide-react';
+import { ShieldCheck, Plus, CheckCircle, Search, FileText, Loader2, Edit, Trash2 } from 'lucide-react';
 
 function PoliciesPage() {
   const [policies, setPolicies] = useState([]);
@@ -8,6 +8,7 @@ function PoliciesPage() {
   const [search, setSearch] = useState('');
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const [newPolicy, setNewPolicy] = useState({
     title: '',
@@ -17,6 +18,12 @@ function PoliciesPage() {
     status: 'Draft',
     version: '1.0'
   });
+
+  const [editingPolicy, setEditingPolicy] = useState(null);
+  const [employeeName, setEmployeeName] = useState('');
+  const [policyAcks, setPolicyAcks] = useState([]);
+  const [allAcks, setAllAcks] = useState([]);
+  const [isSubmittingAck, setIsSubmittingAck] = useState(false);
 
   const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/governance/policies`;
 
@@ -73,9 +80,31 @@ function PoliciesPage() {
     }
   };
 
+  const fetchAcknowledgements = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/acknowledgements`);
+      if (response.data && response.data.success) {
+        setAllAcks(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching acknowledgements:', err);
+    }
+  };
+
   useEffect(() => {
     fetchPolicies();
+    fetchAcknowledgements();
   }, []);
+
+  useEffect(() => {
+    if (selectedPolicy) {
+      const filtered = allAcks.filter(ack => {
+        const policyId = typeof ack.policy === 'object' ? ack.policy._id : ack.policy;
+        return policyId === selectedPolicy._id;
+      });
+      setPolicyAcks(filtered);
+    }
+  }, [selectedPolicy, allAcks]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -97,6 +126,63 @@ function PoliciesPage() {
     } catch (err) {
       console.error('Error creating policy:', err);
       alert('Failed to save policy to MongoDB database.');
+    }
+  };
+
+  const handleEditClick = (policy) => {
+    setEditingPolicy({ ...policy });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`${API_URL}/${editingPolicy._id}`, editingPolicy);
+      if (response.data && response.data.success) {
+        setPolicies(policies.map(p => p._id === editingPolicy._id ? response.data.data : p));
+        setSelectedPolicy(response.data.data);
+        setShowEditModal(false);
+      }
+    } catch (err) {
+      console.error('Error updating policy:', err);
+      alert('Failed to update policy in MongoDB database.');
+    }
+  };
+
+  const handleDelete = async (policyId) => {
+    if (!window.confirm('Are you sure you want to delete this policy? This will delete all associated signatures.')) {
+      return;
+    }
+    try {
+      const response = await axios.delete(`${API_URL}/${policyId}`);
+      if (response.data && response.data.success) {
+        setPolicies(policies.filter(p => p._id !== policyId));
+        if (selectedPolicy?._id === policyId) {
+          setSelectedPolicy(null);
+        }
+        fetchAcknowledgements();
+      }
+    } catch (err) {
+      console.error('Error deleting policy:', err);
+      alert('Failed to delete policy from database.');
+    }
+  };
+
+  const handleAcknowledge = async (e) => {
+    e.preventDefault();
+    if (!employeeName.trim()) return;
+    try {
+      setIsSubmittingAck(true);
+      const response = await axios.post(`${API_URL}/${selectedPolicy._id}/acknowledge`, { employee: employeeName });
+      if (response.data && response.data.success) {
+        setEmployeeName('');
+        await fetchAcknowledgements();
+      }
+    } catch (err) {
+      console.error('Error signing policy:', err);
+      alert('Failed to submit signature.');
+    } finally {
+      setIsSubmittingAck(false);
     }
   };
 
@@ -183,7 +269,7 @@ function PoliciesPage() {
                 </div>
               ))}
               {filteredPolicies.length === 0 && (
-                <div className="p-12 text-center border border-dashed border-slate-900 rounded-2xl text-slate-500">
+                <div className="p-12 text-center border border-dashed border-slate-900 rounded-2xl text-slate-550">
                   No policies found matching your search.
                 </div>
               )}
@@ -197,17 +283,37 @@ function PoliciesPage() {
             <>
               <div className="flex justify-between items-start border-b border-slate-900 pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-white">{selectedPolicy.title}</h2>
-                  <p className="text-[11px] text-slate-500 mt-1 font-medium">Effective date: {selectedPolicy.effectiveDate}</p>
+                  <h2 className="text-xl font-bold text-white leading-tight">{selectedPolicy.title}</h2>
+                  <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+                    Effective: {selectedPolicy.effectiveDate ? new Date(selectedPolicy.effectiveDate).toLocaleDateString() : 'N/A'}
+                  </p>
                 </div>
-                <span className="text-[11px] font-semibold bg-slate-900 text-slate-300 px-2 py-1 rounded-md">
-                  V{selectedPolicy.version}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="text-[11px] font-semibold bg-slate-905 border border-slate-900 text-slate-300 px-2 py-0.5 rounded-md">
+                    V{selectedPolicy.version}
+                  </span>
+                  <div className="flex gap-1.5 mt-1">
+                    <button 
+                      onClick={() => handleEditClick(selectedPolicy)}
+                      className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 border border-slate-850 transition-colors"
+                      title="Edit Policy"
+                    >
+                      <Edit size={14} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(selectedPolicy._id)}
+                      className="p-1.5 rounded-lg bg-red-950/20 hover:bg-red-900/20 text-red-500 border border-red-900/30 transition-colors"
+                      title="Delete Policy"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Summary</h4>
-                  <p className="text-slate-300 text-sm mt-1">{selectedPolicy.description}</p>
+                  <p className="text-slate-355 text-xs mt-1.5 leading-relaxed">{selectedPolicy.description}</p>
                 </div>
                 <div>
                   <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Content</h4>
@@ -215,19 +321,48 @@ function PoliciesPage() {
                     {selectedPolicy.content}
                   </div>
                 </div>
-                <div className="bg-slate-900/20 border border-slate-900 p-4 rounded-xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="text-emerald-400" size={20} />
-                    <div>
-                      <p className="text-xs font-bold text-slate-200">Acknowledgement Required</p>
-                      <p className="text-[10px] text-slate-500">Track company-wide sign-offs</p>
-                    </div>
+
+                {/* Sign-off Form */}
+                <div className="border-t border-slate-900 pt-4 mt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="text-emerald-400" size={16} />
+                    <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Policy Sign-off</h4>
                   </div>
-                  <button className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-                    <CheckCircle size={14} />
-                    Track
-                  </button>
+                  <form onSubmit={handleAcknowledge} className="flex gap-2">
+                    <input 
+                      type="text"
+                      placeholder="Enter name to sign..."
+                      required
+                      value={employeeName}
+                      onChange={(e) => setEmployeeName(e.target.value)}
+                      className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-700"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isSubmittingAck}
+                      className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-700 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                    >
+                      {isSubmittingAck ? 'Signing...' : 'Sign'}
+                    </button>
+                  </form>
                 </div>
+
+                {/* Active Signatures list */}
+                <div className="border-t border-slate-900 pt-4 mt-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Signatures ({policyAcks.length})</h4>
+                  <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+                    {policyAcks.map((ack) => (
+                      <div key={ack._id} className="flex justify-between items-center bg-slate-900/20 border border-slate-900/40 px-3 py-2 rounded-xl text-[10px]">
+                        <span className="font-semibold text-slate-300">{ack.employee}</span>
+                        <span className="text-slate-500">{new Date(ack.acknowledgedAt).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    {policyAcks.length === 0 && (
+                      <p className="text-slate-500 text-xs italic">No signatures recorded yet.</p>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </>
           ) : (
@@ -240,7 +375,7 @@ function PoliciesPage() {
         </div>
       </div>
 
-      {/* Create policy modal skeleton */}
+      {/* Create policy modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="w-full max-w-xl bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-2xl space-y-6">
@@ -334,6 +469,104 @@ function PoliciesPage() {
                   className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
                 >
                   Save Policy
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit policy modal */}
+      {showEditModal && editingPolicy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-xl bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-2xl space-y-6">
+            <h3 className="text-xl font-bold text-white">Edit ESG Policy</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Title</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editingPolicy.title}
+                    onChange={e => setEditingPolicy({...editingPolicy, title: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Category</label>
+                  <select 
+                    value={editingPolicy.category}
+                    onChange={e => setEditingPolicy({...editingPolicy, category: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  >
+                    <option value="Environmental">Environmental</option>
+                    <option value="Social">Social</option>
+                    <option value="Governance">Governance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Description</label>
+                <input 
+                  type="text"
+                  required
+                  value={editingPolicy.description}
+                  onChange={e => setEditingPolicy({...editingPolicy, description: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Policy Content</label>
+                <textarea 
+                  required
+                  rows={4}
+                  value={editingPolicy.content}
+                  onChange={e => setEditingPolicy({...editingPolicy, content: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Version</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editingPolicy.version}
+                    onChange={e => setEditingPolicy({...editingPolicy, version: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Status</label>
+                  <select 
+                    value={editingPolicy.status}
+                    onChange={e => setEditingPolicy({...editingPolicy, status: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Active">Active</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-350 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
