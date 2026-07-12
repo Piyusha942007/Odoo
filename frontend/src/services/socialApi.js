@@ -52,4 +52,25 @@ export const getDepartments = async () => {
   return res.data;
 };
 
+// Employee Participation CRUD
+export const getEmployeeParticipations = async () => {
+  const res = await api.get('/participations');
+  return res.data;
+};
+
+export const createEmployeeParticipation = async (data) => {
+  const res = await api.post('/participations', data);
+  return res.data;
+};
+
+export const updateEmployeeParticipation = async (id, data) => {
+  const res = await api.put(`/participations/${id}`, data);
+  return res.data;
+};
+
+export const deleteEmployeeParticipation = async (id) => {
+  const res = await api.delete(`/participations/${id}`);
+  return res.data;
+};
+
 export default api;

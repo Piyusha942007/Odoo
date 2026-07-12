@@ -10,8 +10,9 @@ const PORT = process.env.PORT || 5000;
 // Enable CORS
 app.use(cors());
 
-// Parse incoming JSON requests
-app.use(express.json());
+// Parse incoming JSON requests with increased limit for Base64 image proofs
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // MongoDB Connection Setup
 const mongoURI = process.env.MONGODB_URI;
@@ -46,6 +47,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 app.use('/api/departments', departmentRoutes);
 app.use('/api/social', require('./routes/socialRoutes'));
 app.use('/api/environmental', require('./routes/environmentalRoutes'));
+app.use('/api/gamification', require('./routes/gamificationRoutes'));
 
 // Mount Governance module routes
 app.use('/api/governance/policies', require('./routes/policyRoutes'));
