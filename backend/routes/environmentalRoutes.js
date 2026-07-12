@@ -89,4 +89,17 @@ router.route('/recompute-scores')
 router.route('/departments/:id/tracking')
   .get(getDepartmentTracking);
 
+const {
+  getAutoEmissionSettings,
+  saveAutoEmissionSettings,
+  simulateErpRecord
+} = require('../controllers/autoEmissionController');
+
+router.route('/settings')
+  .get(getAutoEmissionSettings)
+  .post(saveAutoEmissionSettings);
+
+router.route('/simulate-erp')
+  .post(simulateErpRecord);
+
 module.exports = router;

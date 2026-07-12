@@ -176,6 +176,11 @@ function EnvironmentalOverview() {
                 <Tag className="w-3.5 h-3.5 text-emerald-400" />
                 Product ESG Configurations →
               </Link>
+              <span className="text-slate-700">|</span>
+              <Link to="/environmental/auto-emission" className="text-amber-400 hover:underline flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                Auto Emission Settings →
+              </Link>
             </div>
           </div>
         </div>
@@ -415,6 +420,128 @@ function EnvironmentalOverview() {
             </span>
           </div>
         </Link>
+      </div>
+
+      {/* ── Top Emitters + Goal Attainment ──────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Top 5 Emitting Departments */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+          <div>
+            <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
+              <Factory className="w-5 h-5 text-rose-400" />
+              Top Emission Sources
+            </h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Departments ranked by total CO₂e output (all periods)
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {(() => {
+              const emitters = dashboard?.topEmitters || [];
+              if (emitters.length === 0) {
+                return (
+                  <div className="text-xs text-slate-500 py-6 text-center font-medium">
+                    No carbon transactions recorded yet.
+                  </div>
+                );
+              }
+              const max = Math.max(...emitters.map(e => e.value), 1);
+              const barColors = [
+                'from-rose-500 to-rose-400',
+                'from-orange-500 to-amber-400',
+                'from-amber-500 to-yellow-400',
+                'from-yellow-500 to-lime-400',
+                'from-lime-500 to-green-400'
+              ];
+              return emitters.map((e, i) => (
+                <div key={e.name} className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-semibold">
+                    <span className="text-slate-300 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-extrabold bg-slate-800 text-slate-400 shrink-0">
+                        {i + 1}
+                      </span>
+                      {e.name}
+                    </span>
+                    <span className="text-slate-400 font-mono tabular-nums">
+                      {(e.value / 1000).toFixed(2)} tCO₂e
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-gradient-to-r ${barColors[i]} rounded-full transition-all duration-700`}
+                      style={{ width: `${Math.round((e.value / max) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+
+        {/* Goal Attainment Progress */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+          <div>
+            <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
+              <Target className="w-5 h-5 text-teal-400" />
+              Goal Attainment — Emission Budget Used
+            </h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Actual emissions as % of each goal's target cap (100% = at limit)
+            </p>
+          </div>
+
+          <div className="space-y-5">
+            {(() => {
+              const goals = dashboard?.goalAttainment || [];
+              if (goals.length === 0) {
+                return (
+                  <div className="text-xs text-slate-500 py-6 text-center font-medium">
+                    No sustainability goals configured yet.
+                  </div>
+                );
+              }
+              return goals.map((g, i) => {
+                const pct    = Math.min(g.percentage, 100);
+                const isOver = g.percentage > 100;
+                const achieved = g.status === 'achieved';
+                return (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-200 truncate">{g.title}</div>
+                        <div className="text-[10px] text-slate-500 font-medium">{g.department}</div>
+                      </div>
+                      {achieved
+                        ? <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">Achieved ✅</span>
+                        : <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 whitespace-nowrap">At Risk ⚠️</span>
+                      }
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${achieved ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-gradient-to-r from-rose-500 to-rose-400'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                      {/* 100% marker */}
+                      <div className="absolute top-0 bottom-0 w-px bg-slate-600" style={{ left: '100%', transform: 'translateX(-1px)' }} />
+                    </div>
+
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                      <span>Actual: {g.actualValue.toLocaleString()} kg</span>
+                      <span className={isOver ? 'text-rose-400 font-bold' : ''}>
+                        {g.percentage}% of {g.targetValue.toLocaleString()} kg cap
+                      </span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+
       </div>
 
       {/* Carbon Accounting Methodology Section */}
