@@ -362,7 +362,7 @@ function CsrActivitiesPage() {
                   value={newAct.description}
                   onChange={(e) => setNewAct(prev => ({ ...prev, description: e.target.value }))}
                   rows={2}
-                  className="w-full bg-slate-955 border border-slate-800 rounded p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div className="col-span-1 md:col-span-2 flex justify-end gap-2">
