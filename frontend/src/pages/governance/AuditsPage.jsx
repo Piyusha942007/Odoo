@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, AlertCircle, Calendar, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, AlertCircle, Calendar, CheckCircle2, Loader2, Edit, Trash2 } from 'lucide-react';
 
 function AuditsPage() {
   const [activeTab, setActiveTab] = useState('audits');
@@ -10,6 +10,8 @@ function AuditsPage() {
 
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [showEditAuditModal, setShowEditAuditModal] = useState(false);
+  const [showEditIssueModal, setShowEditIssueModal] = useState(false);
 
   const [newAudit, setNewAudit] = useState({
     title: '',
@@ -28,6 +30,9 @@ function AuditsPage() {
     dueDate: '',
     status: 'Open'
   });
+
+  const [editingAudit, setEditingAudit] = useState(null);
+  const [editingIssue, setEditingIssue] = useState(null);
 
   const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/governance/audits`;
 
@@ -125,6 +130,42 @@ function AuditsPage() {
     }
   };
 
+  const handleEditAuditClick = (audit) => {
+    setEditingAudit({
+      ...audit,
+      startDate: audit.startDate ? new Date(audit.startDate).toISOString().split('T')[0] : '',
+      endDate: audit.endDate ? new Date(audit.endDate).toISOString().split('T')[0] : ''
+    });
+    setShowEditAuditModal(true);
+  };
+
+  const handleUpdateAudit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`${API_URL}/${editingAudit._id}`, editingAudit);
+      if (response.data && response.data.success) {
+        setAudits(audits.map(a => a._id === editingAudit._id ? response.data.data : a));
+        setShowEditAuditModal(false);
+      }
+    } catch (err) {
+      console.error('Error updating audit:', err);
+      alert('Failed to update audit.');
+    }
+  };
+
+  const handleDeleteAudit = async (auditId) => {
+    if (!window.confirm('Are you sure you want to delete this audit?')) return;
+    try {
+      const response = await axios.delete(`${API_URL}/${auditId}`);
+      if (response.data && response.data.success) {
+        setAudits(audits.filter(a => a._id !== auditId));
+      }
+    } catch (err) {
+      console.error('Error deleting audit:', err);
+      alert('Failed to delete audit.');
+    }
+  };
+
   const handleCreateIssue = async (e) => {
     e.preventDefault();
     try {
@@ -137,6 +178,42 @@ function AuditsPage() {
     } catch (err) {
       console.error('Error creating compliance issue:', err);
       alert('Failed to save compliance issue to MongoDB database.');
+    }
+  };
+
+  const handleEditIssueClick = (issue) => {
+    setEditingIssue({
+      ...issue,
+      dueDate: issue.dueDate ? new Date(issue.dueDate).toISOString().split('T')[0] : ''
+    });
+    setShowEditIssueModal(true);
+  };
+
+  const handleUpdateIssue = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`${API_URL}/compliance-issues/${editingIssue._id}`, editingIssue);
+      if (response.data && response.data.success) {
+        setIssues(issues.map(i => i._id === editingIssue._id ? response.data.data : i));
+        setShowEditIssueModal(false);
+      }
+    } catch (err) {
+      console.error('Error updating compliance issue:', err);
+      alert('Failed to update compliance issue.');
+    }
+  };
+
+  const handleDeleteIssue = async (issueId) => {
+    if (!window.confirm('Are you sure you want to delete this compliance issue?')) return;
+    try {
+      const response = await axios.delete(`${API_URL}/compliance-issues/${issueId}`);
+      if (response.data && response.data.success) {
+        // Remove from list immediately to update UI without page reload
+        setIssues(issues.filter(i => i._id !== issueId));
+      }
+    } catch (err) {
+      console.error('Error deleting compliance issue:', err);
+      alert('Failed to delete compliance issue.');
     }
   };
 
@@ -248,9 +325,25 @@ function AuditsPage() {
                       </div>
                       <p className="text-slate-400 text-sm max-w-2xl">{audit.description}</p>
                     </div>
-                    <div className="text-right text-xs text-slate-500 space-y-1 font-medium">
+                    <div className="text-right text-xs text-slate-500 space-y-1.5 font-medium flex flex-col items-end">
                       <p>Auditor: <span className="text-slate-300 font-semibold">{audit.auditor}</span></p>
                       <p>{new Date(audit.startDate).toLocaleDateString()} to {new Date(audit.endDate).toLocaleDateString()}</p>
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          onClick={() => handleEditAuditClick(audit)}
+                          className="flex items-center gap-1 text-[10px] bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-emerald-400 px-2 py-1 rounded-md transition-colors border border-slate-800"
+                        >
+                          <Edit size={12} />
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteAudit(audit._id)}
+                          className="flex items-center gap-1 text-[10px] bg-red-950/10 hover:bg-red-950/20 text-red-500 px-2 py-1 rounded-md transition-colors border border-red-900/30"
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -280,40 +373,62 @@ function AuditsPage() {
           {/* Compliance Issues Panel */}
           {activeTab === 'issues' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {issues.map((issue) => (
-                <div key={issue._id} className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col justify-between hover:border-slate-800 transition-colors">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${getSeverityStyles(issue.severity)}`}>
-                          {issue.severity} Severity
-                        </span>
-                        <h3 className="text-lg font-bold text-white mt-2">{issue.title}</h3>
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${getStatusStyles(issue.status)}`}>
-                        {issue.status}
-                      </span>
-                    </div>
-                    <p className="text-slate-400 text-sm">{issue.description}</p>
-                  </div>
+              {issues.map((issue) => {
+                // Compute dynamic overdue status client side as fallback
+                const isOverdue = new Date(issue.dueDate) < new Date() && !['Resolved', 'Completed', 'Closed'].includes(issue.status);
+                const displayStatus = isOverdue ? 'Overdue' : issue.status;
 
-                  <div className="mt-6 pt-4 border-t border-slate-900/60 flex items-center justify-between text-xs text-slate-500">
-                    <div>
-                      <p>Owner: <span className="text-slate-350 font-semibold">{issue.owner}</span></p>
-                      <p className="mt-0.5">Due Date: <span className={`${issue.status === 'Overdue' ? 'text-red-400 font-bold' : 'text-slate-400'}`}>{new Date(issue.dueDate).toLocaleDateString()}</span></p>
+                return (
+                  <div key={issue._id} className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col justify-between hover:border-slate-800 transition-colors">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${getSeverityStyles(issue.severity)}`}>
+                            {issue.severity} Severity
+                          </span>
+                          <h3 className="text-lg font-bold text-white mt-2">{issue.title}</h3>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${getStatusStyles(displayStatus)}`}>
+                          {displayStatus}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-sm">{issue.description}</p>
                     </div>
-                    {issue.status !== 'Resolved' && (
-                      <button 
-                        onClick={() => handleResolveIssue(issue._id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-emerald-400 border border-emerald-500/20 rounded-lg font-semibold hover:border-emerald-500/40 transition-colors"
-                      >
-                        <CheckCircle2 size={14} />
-                        Resolve
-                      </button>
-                    )}
+
+                    <div className="mt-6 pt-4 border-t border-slate-900/60 flex items-center justify-between text-xs text-slate-500">
+                      <div>
+                        <p>Owner: <span className="text-slate-350 font-semibold">{issue.owner}</span></p>
+                        <p className="mt-0.5">Due Date: <span className={`${displayStatus === 'Overdue' ? 'text-red-400 font-bold' : 'text-slate-450'}`}>{new Date(issue.dueDate).toLocaleDateString()}</span></p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleEditIssueClick(issue)}
+                          className="flex items-center gap-1 text-[10px] bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-emerald-400 px-2 py-1 rounded-md transition-colors border border-slate-800"
+                        >
+                          <Edit size={12} />
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteIssue(issue._id)}
+                          className="flex items-center gap-1 text-[10px] bg-red-950/10 hover:bg-red-950/20 text-red-500 px-2 py-1 rounded-md transition-colors border border-red-900/30"
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                        {issue.status !== 'Resolved' && (
+                          <button 
+                            onClick={() => handleResolveIssue(issue._id)}
+                            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 hover:bg-slate-850 text-emerald-400 border border-emerald-500/20 rounded-lg font-semibold hover:border-emerald-500/40 transition-colors"
+                          >
+                            <CheckCircle2 size={12} />
+                            Resolve
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {issues.length === 0 && (
                 <div className="p-12 text-center border border-dashed border-slate-900 rounded-2xl text-slate-550">
                   No compliance issues logged yet.
@@ -371,10 +486,12 @@ function AuditsPage() {
                   <select 
                     value={newAudit.status}
                     onChange={e => setNewAudit({...newAudit, status: e.target.value})}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-300"
                   >
                     <option value="Scheduled">Scheduled</option>
                     <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
@@ -415,6 +532,103 @@ function AuditsPage() {
                   className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
                 >
                   Schedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Audit Modal */}
+      {showEditAuditModal && editingAudit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-2xl space-y-6">
+            <h3 className="text-xl font-bold text-white">Edit Compliance Audit</h3>
+            <form onSubmit={handleUpdateAudit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Audit Title</label>
+                <input 
+                  type="text"
+                  required
+                  value={editingAudit.title}
+                  onChange={e => setEditingAudit({...editingAudit, title: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Description</label>
+                <textarea 
+                  required
+                  rows={3}
+                  value={editingAudit.description}
+                  onChange={e => setEditingAudit({...editingAudit, description: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Auditor</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editingAudit.auditor}
+                    onChange={e => setEditingAudit({...editingAudit, auditor: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Status</label>
+                  <select 
+                    value={editingAudit.status}
+                    onChange={e => setEditingAudit({...editingAudit, status: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-350"
+                  >
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Start Date</label>
+                  <input 
+                    type="date"
+                    required
+                    value={editingAudit.startDate}
+                    onChange={e => setEditingAudit({...editingAudit, startDate: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">End Date</label>
+                  <input 
+                    type="date"
+                    required
+                    value={editingAudit.endDate}
+                    onChange={e => setEditingAudit({...editingAudit, endDate: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowEditAuditModal(false)}
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-350 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -469,7 +683,7 @@ function AuditsPage() {
                   <select 
                     value={newIssue.severity}
                     onChange={e => setNewIssue({...newIssue, severity: e.target.value})}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-300"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -503,6 +717,107 @@ function AuditsPage() {
                   className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
                 >
                   Log Issue
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Compliance Issue Modal */}
+      {showEditIssueModal && editingIssue && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-2xl space-y-6">
+            <h3 className="text-xl font-bold text-white">Edit Compliance Issue</h3>
+            <form onSubmit={handleUpdateIssue} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Issue Title</label>
+                <input 
+                  type="text"
+                  required
+                  value={editingIssue.title}
+                  onChange={e => setEditingIssue({...editingIssue, title: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2">Description</label>
+                <textarea 
+                  required
+                  rows={3}
+                  value={editingIssue.description}
+                  onChange={e => setEditingIssue({...editingIssue, description: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Assignee/Owner</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editingIssue.owner}
+                    onChange={e => setEditingIssue({...editingIssue, owner: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Severity</label>
+                  <select 
+                    value={editingIssue.severity}
+                    onChange={e => setEditingIssue({...editingIssue, severity: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-350"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Due Date</label>
+                  <input 
+                    type="date"
+                    required
+                    value={editingIssue.dueDate}
+                    onChange={e => setEditingIssue({...editingIssue, dueDate: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-450"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2">Status</label>
+                  <select 
+                    value={editingIssue.status}
+                    onChange={e => setEditingIssue({...editingIssue, status: e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-slate-700 text-slate-350"
+                  >
+                    <option value="Open">Open</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowEditIssueModal(false)}
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-350 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-bold transition-all"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>

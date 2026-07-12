@@ -2,6 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { Audit, ComplianceIssue } = require('../models/Audit');
 
+// Helper to flag overdue issues in-memory
+const flagOverdueIfNeeded = (doc) => {
+  if (!doc) return doc;
+  const rawDoc = doc.toObject ? doc.toObject() : doc;
+  const now = new Date();
+  if (rawDoc.dueDate && new Date(rawDoc.dueDate) < now && !['Resolved', 'Completed', 'Closed'].includes(rawDoc.status)) {
+    rawDoc.status = 'Overdue';
+  }
+  return rawDoc;
+};
+
 // --- COMPLIANCE ISSUE ENDPOINTS ---
 
 // GET all compliance issues
@@ -11,7 +22,9 @@ router.get('/compliance-issues', async (req, res, next) => {
       .populate('audit', 'title auditor')
       .populate('policy', 'title category')
       .sort({ dueDate: 1 });
-    res.json({ success: true, count: issues.length, data: issues });
+    
+    const processedIssues = issues.map(issue => flagOverdueIfNeeded(issue));
+    res.json({ success: true, count: processedIssues.length, data: processedIssues });
   } catch (error) {
     next(error);
   }
@@ -32,7 +45,7 @@ router.post('/compliance-issues', async (req, res, next) => {
       status
     });
     const savedIssue = await issue.save();
-    res.status(201).json({ success: true, data: savedIssue });
+    res.status(201).json({ success: true, data: flagOverdueIfNeeded(savedIssue) });
   } catch (error) {
     next(error);
   }
@@ -54,7 +67,20 @@ router.put('/compliance-issues/:id', async (req, res, next) => {
     if (!updatedIssue) {
       return res.status(404).json({ success: false, message: 'Compliance issue not found' });
     }
-    res.json({ success: true, data: updatedIssue });
+    res.json({ success: true, data: flagOverdueIfNeeded(updatedIssue) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE compliance issue
+router.delete('/compliance-issues/:id', async (req, res, next) => {
+  try {
+    const deletedIssue = await ComplianceIssue.findByIdAndDelete(req.params.id);
+    if (!deletedIssue) {
+      return res.status(404).json({ success: false, message: 'Compliance issue not found' });
+    }
+    res.json({ success: true, message: 'Compliance issue deleted successfully' });
   } catch (error) {
     next(error);
   }
