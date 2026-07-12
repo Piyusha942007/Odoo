@@ -50,6 +50,12 @@ const saveEsgConfig = async (req, res) => {
     config.aggregationMode = aggregationMode;
 
     await config.save();
+    // Immediately trigger a recompute of all department scores using the new weights
+    try {
+      await recomputeAllDepartmentScores('2026', 'Q3');
+    } catch (recompErr) {
+      console.error('Failed to trigger automatic recomputation after config change:', recompErr);
+    }
     return res.status(200).json({ success: true, data: config });
   } catch (err) {
     console.error(err);
