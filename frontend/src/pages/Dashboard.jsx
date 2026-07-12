@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Server, Database, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Server, Database, CheckCircle2, AlertTriangle, RefreshCw, Award } from 'lucide-react';
 
 function Dashboard() {
   const [health, setHealth] = useState({ api: 'checking', db: 'checking' });
@@ -35,9 +35,9 @@ function Dashboard() {
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
       {/* Welcome Banner */}
       <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
-        <div className="space-y-2">
+        <div className="space-y-2 font-sans">
           <h2 className="text-3xl font-extrabold text-slate-100">Welcome to EcoSphere</h2>
-          <p className="text-slate-400 font-medium">ESG Management Platform — P1 Integration Hub</p>
+          <p className="text-slate-400 font-medium">ESG Management Platform — Integrated Developer Hub</p>
         </div>
         <button
           onClick={checkSystemHealth}
@@ -116,6 +116,18 @@ function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Social & Gamification Hour 1 Module Status */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <Award className="w-6 h-6 text-purple-400" />
+          <h3 className="text-lg font-bold text-slate-200">Social & Gamification Module (Khushi's Track)</h3>
+        </div>
+        <p className="text-sm text-slate-400 leading-relaxed font-medium">
+          This dashboard displays status details for the <code className="text-purple-400 font-mono">feature/social-gamification</code> branch. 
+          The Category, CSR Activities, and Challenges models and page foundations are loaded and accessible in the navigation sidebar.
+        </p>
       </div>
 
       {/* System Status Details */}

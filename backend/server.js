@@ -43,6 +43,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 
 // Mount routes
 app.use('/api/departments', departmentRoutes);
+app.use('/api/social', require('./routes/socialRoutes'));
 
 // 404 Route handler
 app.use((req, res, next) => {

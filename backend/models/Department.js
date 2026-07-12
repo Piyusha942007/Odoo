@@ -31,6 +31,33 @@ const DepartmentSchema = new mongoose.Schema({
     type: String,
     enum: ['Active', 'Inactive'],
     default: 'Active'
+  },
+  socialScore: {
+    type: Number,
+    default: 0
+  },
+  environmentalScore: {
+    type: Number,
+    default: 0
+  },
+  governanceScore: {
+    type: Number,
+    default: 0
+  },
+  totalESGScore: {
+    type: Number,
+    default: 0
+  },
+  diversityMetrics: {
+    genderRatio: {
+      type: String,
+      default: "50:50"
+    },
+    ageBands: {
+      under30: { type: Number, default: 30 },
+      thirtyToFifty: { type: Number, default: 50 },
+      over50: { type: Number, default: 20 }
+    }
   }
 }, {
   timestamps: true

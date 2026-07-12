@@ -9,4 +9,26 @@ const api = axios.create({
   }
 });
 
+// Category Foundation API
+export const getCategories = async () => {
+  const res = await api.get('/social/categories');
+  return res.data;
+};
+
+export const createCategory = async (data) => {
+  const res = await api.post('/social/categories', data);
+  return res.data;
+};
+
+// Csr Activity Skeletons
+export const getCsrActivities = async () => {
+  const res = await api.get('/social/csr-activities');
+  return res.data;
+};
+
+// Challenges Skeletons
+export const getChallenges = async () => {
+  const res = await api.get('/social/challenges');
+  return res.data;
+};
 export default api;
